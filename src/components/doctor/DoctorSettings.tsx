@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import api from '@/lib/api';
@@ -174,10 +175,7 @@ export function DoctorSettings() {
     { id: 'security', label: 'Security', icon: Shield },
   ];
 
-  const getAvatarUrl = () => {
-    if (doctor?.avatar) return doctor.avatar;
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'Doctor')}&background=0D9488&color=fff&size=200`;
-  };
+
 
   if (isLoading) {
     return (
@@ -236,10 +234,10 @@ export function DoctorSettings() {
               {/* Avatar Section */}
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <img
-                    src={getAvatarUrl()}
-                    alt={profile.name}
-                    className="w-20 h-20 rounded-full object-cover border-4 border-primary/20"
+                  <UserAvatar
+                    name={profile.name || 'Doctor'}
+                    avatar={doctor?.avatar}
+                    size="xl"
                   />
                   <button className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg">
                     <Camera size={14} />

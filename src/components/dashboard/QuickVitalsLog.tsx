@@ -342,7 +342,6 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
             </div>
           )}
 
-<<<<<<< HEAD
           {/* Heart Rate */}
           {showHeart && (
             <div className="border border-border rounded-xl p-4 hover:border-emerald-200 transition-colors bg-card">
@@ -387,7 +386,6 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
             </div>
           )}
         </div>
-=======
         {/* Important Warning */}
         {/* <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
           <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -402,8 +400,6 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
             </p>
           </div>
         </div> */}
->>>>>>> 738d57f630b902745335002f5776a466e48bb78e
-
         {/* Submit Button */}
         <Button
           type="submit"

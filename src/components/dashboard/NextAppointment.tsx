@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import api from '@/lib/api';
 
 interface Appointment {
@@ -26,12 +27,17 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
       try {
         const response = await api.get('/appointments');
         const appointments = response.data;
-        
-        // Find next upcoming appointment
+
+        const now = new Date();
+
+        // Find next upcoming appointment (confirmed or pending, in the future)
         const upcoming = appointments
-          .filter((apt: Appointment) => apt.status === 'pending')
+          .filter((apt: Appointment) => {
+            const aptDate = new Date(apt.date);
+            return (apt.status === 'confirmed' || apt.status === 'pending') && aptDate >= now;
+          })
           .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-        
+
         setAppointment(upcoming);
       } catch (error) {
         console.error('Failed to fetch appointments', error);
@@ -71,8 +77,8 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
 
   // Format date
   const appointmentDate = new Date(appointment.date);
-  const formattedDate = appointmentDate.toLocaleDateString('en-US', { 
-    month: 'short', 
+  const formattedDate = appointmentDate.toLocaleDateString('en-US', {
+    month: 'short',
     day: 'numeric',
     year: 'numeric'
   });
@@ -86,28 +92,21 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
       <div className="flex flex-col gap-4">
         {/* Top Section: Avatar & Info */}
         <div className="flex items-start gap-4">
-          <img
-<<<<<<< HEAD
-            src={doctor?.avatar || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face'}
-            alt={appointment.doctorName}
-            className="w-14 h-14 rounded-xl object-cover ring-2 ring-primary/10 flex-shrink-0"
-=======
-            src={appointment.doctorId?.avatar || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face'}
-            alt={appointment.doctorId?.name || 'Doctor'}
-            className="w-16 h-16 rounded-xl object-cover ring-2 ring-primary/10"
->>>>>>> 738d57f630b902745335002f5776a466e48bb78e
+          <UserAvatar
+            name={appointment.doctorId?.name || 'Doctor'}
+            avatar={appointment.doctorId?.avatar}
+            size="lg"
           />
 
-          <div className="min-w-0">
-            <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide font-semibold">Next Appointment</p>
-            <h3 className="font-display font-semibold text-base text-foreground leading-tight mb-1">
-              {appointment.doctorName}
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground mb-0.5">Next Appointment</p>
+            <h3 className="font-display font-semibold text-lg text-foreground">
+              Dr. {appointment.doctorId?.name || 'Unknown'}
             </h3>
-            <p className="text-sm text-primary font-medium">{appointment.specialty}</p>
+            <p className="text-sm text-primary font-medium">{appointment.doctorId?.specialty || 'General'}</p>
           </div>
         </div>
 
-<<<<<<< HEAD
         {/* Reason (if exists) */}
         {appointment.reason && (
           <div className="text-sm text-muted-foreground bg-muted/40 p-3 rounded-lg border border-border/50">
@@ -117,43 +116,30 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
         )}
 
         {/* Time and Action */}
-        <div className="flex items-center justify-between pt-2 border-t border-border mt-1">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar size={14} />
-              <span className="font-medium text-foreground">{appointment.date}</span>
-=======
-        {/* Appointment Details */}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground mb-0.5">Next Appointment</p>
-          <h3 className="font-display font-semibold text-lg text-foreground">
-            Dr. {appointment.doctorId?.name || 'Unknown'}
-          </h3>
-          <p className="text-sm text-primary font-medium">{appointment.doctorId?.specialty || 'General'}</p>
-          
-          {appointment.reason && (
-            <p className="text-sm text-muted-foreground mt-2">
-              <span className="font-medium text-foreground">Reason:</span> {appointment.reason}
-            </p>
-          )}
-        </div>
-
-        {/* Time and Action */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-border">
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar size={16} />
               <span className="font-medium text-foreground">{formattedDate}</span>
->>>>>>> 738d57f630b902745335002f5776a466e48bb78e
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock size={14} />
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Clock size={16} />
               <span className="font-medium text-foreground">{appointment.time}</span>
             </div>
           </div>
 
           <Button
-            onClick={onJoinCall}
+            onClick={() => {
+              // Store appointment data for consultation
+              localStorage.setItem('activeConsultation', JSON.stringify({
+                appointmentId: appointment._id,
+                doctorId: appointment.doctorId._id,
+                doctorName: appointment.doctorId.name,
+                doctorAvatar: appointment.doctorId.avatar,
+                doctorSpecialty: appointment.doctorId.specialty,
+              }));
+              onJoinCall();
+            }}
             size="sm"
             className="btn-hero flex items-center gap-2 shadow-sm"
           >

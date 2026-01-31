@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { cn } from '@/lib/utils';
 // import { doctors, availableTimeSlots, type Doctor } from '@/lib/mockData';
 import { availableTimeSlots } from '@/lib/mockData'; // Keep timeslots mock for now or move to backend config
@@ -39,9 +40,48 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
 
+  // Track booked appointments - map of doctorId to appointment details
+  const [bookedAppointments, setBookedAppointments] = useState<Record<string, {
+    appointmentId: string;
+    doctorId: string;
+    doctorName: string;
+    specialty: string;
+    avatar?: string;
+    date: Date;
+    time: string;
+    reason: string;
+  }>>({});
+
   useEffect(() => {
     fetchDoctors();
+    fetchUserAppointments();
   }, []);
+
+  const fetchUserAppointments = async () => {
+    try {
+      const response = await api.get('/appointments');
+      const appointments = response.data;
+
+      // Convert appointments array to bookedAppointments map
+      const appointmentsMap: Record<string, any> = {};
+      appointments.forEach((appt: any) => {
+        appointmentsMap[appt.doctorId._id || appt.doctorId] = {
+          appointmentId: appt._id,
+          doctorId: appt.doctorId._id || appt.doctorId,
+          doctorName: appt.doctorId.name || 'Unknown',
+          specialty: appt.doctorId.specialty || 'General',
+          avatar: appt.doctorId.avatar,
+          date: new Date(appt.date),
+          time: appt.time,
+          reason: appt.reason || 'General Consultation',
+        };
+      });
+
+      setBookedAppointments(appointmentsMap);
+    } catch (error) {
+      console.error('Failed to fetch appointments', error);
+    }
+  };
 
   const fetchDoctors = async () => {
     try {
@@ -67,7 +107,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
   const filteredDoctors = doctors.filter(doc => {
     const matchesSpecialty = specialty === 'all' || (doc.specialty && doc.specialty.toLowerCase().includes(specialty.toLowerCase()));
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (doc.specialty && doc.specialty.toLowerCase().includes(searchQuery.toLowerCase()));
+      (doc.specialty && doc.specialty.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSpecialty && matchesSearch;
   });
 
@@ -78,19 +118,39 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
 
   const confirmBooking = async () => {
     if (!selectedDate || !selectedTime || !selectedDoctor) return;
-    
+
     setIsBooking(true);
     try {
       const appointmentDate = dates[selectedDate];
-      
-      await api.post('/appointments', {
+
+      const response = await api.post('/appointments', {
         doctorId: selectedDoctor._id,
         date: appointmentDate,
         time: selectedTime,
         reason: reason || 'General Consultation',
       });
 
+      // Store the booked appointment with the returned appointmentId
+      setBookedAppointments(prev => ({
+        ...prev,
+        [selectedDoctor._id]: {
+          appointmentId: response.data._id,
+          doctorId: selectedDoctor._id,
+          doctorName: selectedDoctor.name,
+          specialty: selectedDoctor.specialty,
+          avatar: selectedDoctor.avatar,
+          date: appointmentDate,
+          time: selectedTime,
+          reason: reason || 'General Consultation',
+        }
+      }));
+
       setBookingConfirmed(true);
+      toast.success('Appointment booked successfully!', {
+        description: `With ${selectedDoctor?.name} on ${dates[selectedDate].toLocaleDateString()} at ${selectedTime}`,
+      });
+
+      // Close modal after a short delay
       setTimeout(() => {
         setShowBookingModal(false);
         setBookingConfirmed(false);
@@ -98,10 +158,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
         setSelectedDate(null);
         setSelectedTime(null);
         setReason('');
-        toast.success('Appointment booked successfully!', {
-          description: `With ${selectedDoctor?.name} on ${dates[selectedDate].toLocaleDateString()} at ${selectedTime}`,
-        });
-      }, 2000);
+      }, 1500);
     } catch (error: any) {
       console.error(error);
       toast.error(error.response?.data?.message || 'Failed to book appointment');
@@ -162,10 +219,10 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
             className="vitals-card"
           >
             <div className="flex flex-col sm:flex-row gap-4">
-              <img
-                src={doctor.avatar || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=faces'}
-                alt={doctor.name}
-                className="w-20 h-20 rounded-xl object-cover ring-2 ring-primary/10"
+              <UserAvatar
+                name={doctor.name}
+                avatar={doctor.avatar}
+                size="xl"
               />
               <div className="flex-1">
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
@@ -182,20 +239,104 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                   {doctor.experience} years experience
                 </p>
                 <div className="flex flex-wrap items-center justify-center sm:justify-between gap-3 mt-4 pt-3 border-t border-border/50">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success/10 text-success text-xs font-medium rounded-full">
-                    <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
-                    Available Now
-                  </span>
-                  <Button 
-                    onClick={() => handleBook(doctor)}
-                    size="sm"
-                    className={cn(
-                      "w-full sm:w-auto min-w-[140px]",
-                      'btn-hero text-sm py-2'
-                    )}
-                  >
-                    Book Appointment
-                  </Button>
+                  {bookedAppointments[doctor._id] ? (
+                    // Show booked status and action buttons
+                    <div className="w-full space-y-3">
+                      {/* Booked Badge */}
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/10 text-success text-sm font-semibold rounded-full">
+                          <Check size={16} />
+                          Booked
+                        </span>
+                        <div className="text-xs text-muted-foreground">
+                          {bookedAppointments[doctor._id].date.toLocaleDateString('en', { month: 'short', day: 'numeric' })} • {bookedAppointments[doctor._id].time}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            const appt = bookedAppointments[doctor._id];
+                            const [hours, minutes] = appt.time.split(':');
+                            const startTime = new Date(appt.date);
+                            startTime.setHours(parseInt(hours), parseInt(minutes), 0);
+
+                            const endTime = new Date(startTime);
+                            endTime.setHours(endTime.getHours() + 1);
+
+                            const formatGoogleCalendarDate = (date: Date) => {
+                              return date.toISOString().replace(/-|:|\.\d+/g, '');
+                            };
+
+                            const title = encodeURIComponent(`Appointment with Dr. ${appt.doctorName}`);
+                            const details = encodeURIComponent(`${appt.specialty} consultation${appt.reason ? `\n\nReason: ${appt.reason}` : ''}`);
+                            const location = encodeURIComponent('CareConnect Health Platform - Virtual');
+                            const start = formatGoogleCalendarDate(startTime);
+                            const end = formatGoogleCalendarDate(endTime);
+
+                            const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${start}/${end}`;
+
+                            window.open(googleCalendarUrl, '_blank');
+                            toast.success('Opening Google Calendar...');
+                          }}
+                          size="sm"
+                          className="flex-1 text-xs"
+                          variant="default"
+                        >
+                          <Calendar size={14} className="mr-1.5" />
+                          Add to Calendar
+                        </Button>
+
+                        <Button
+                          onClick={async () => {
+                            try {
+                              const appointmentId = bookedAppointments[doctor._id].appointmentId;
+
+                              // Delete appointment from database
+                              await api.delete(`/appointments/${appointmentId}`);
+
+                              // Remove from local state
+                              setBookedAppointments(prev => {
+                                const newState = { ...prev };
+                                delete newState[doctor._id];
+                                return newState;
+                              });
+
+                              toast.success('Appointment cancelled successfully');
+                            } catch (error) {
+                              console.error('Failed to cancel appointment:', error);
+                              toast.error('Failed to cancel appointment');
+                            }
+                          }}
+                          size="sm"
+                          className="flex-1 text-xs"
+                          variant="outline"
+                        >
+                          <X size={14} className="mr-1.5" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Show available and book button
+                    <>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success/10 text-success text-xs font-medium rounded-full">
+                        <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
+                        Available Now
+                      </span>
+                      <Button
+                        onClick={() => handleBook(doctor)}
+                        size="sm"
+                        className={cn(
+                          "w-full sm:w-auto min-w-[140px]",
+                          'btn-hero text-sm py-2'
+                        )}
+                      >
+                        Book Appointment
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -221,7 +362,22 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
               className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             >
               {bookingConfirmed ? (
-                <div className="p-8 text-center">
+                <div className="p-8 relative">
+                  {/* Close button */}
+                  <button
+                    onClick={() => {
+                      setShowBookingModal(false);
+                      setBookingConfirmed(false);
+                      setSelectedDoctor(null);
+                      setSelectedDate(null);
+                      setSelectedTime(null);
+                      setReason('');
+                    }}
+                    className="absolute top-4 right-4 p-2 hover:bg-muted rounded-lg transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -229,18 +385,107 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                   >
                     <Check size={40} className="text-success-foreground" />
                   </motion.div>
-                  <h2 className="font-display font-bold text-2xl mb-2">Booking Confirmed!</h2>
-                  <p className="text-muted-foreground">Your appointment has been scheduled</p>
+
+                  <h2 className="font-display font-bold text-2xl mb-2 text-center">Appointment Booked!</h2>
+                  <p className="text-muted-foreground text-center mb-6">
+                    Your appointment has been confirmed
+                  </p>
+
+                  {/* Appointment Details Card */}
+                  <div className="bg-muted/30 rounded-xl p-4 mb-6 border border-border">
+                    <div className="flex items-center gap-3 mb-3">
+                      <UserAvatar
+                        name={selectedDoctor.name}
+                        avatar={selectedDoctor.avatar}
+                        size="md"
+                      />
+                      <div>
+                        <h3 className="font-semibold">{selectedDoctor.name}</h3>
+                        <p className="text-sm text-primary">{selectedDoctor.specialty}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Calendar size={16} className="text-muted-foreground" />
+                        <span>{selectedDate !== null ? dates[selectedDate].toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : ''}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-muted-foreground" />
+                        <span>{selectedTime}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-3">
+                    <Button
+                      onClick={() => {
+                        if (selectedDate === null || !selectedTime) return;
+
+                        const appointmentDate = dates[selectedDate];
+                        const [hours, minutes] = selectedTime.split(':');
+                        const startTime = new Date(appointmentDate);
+                        startTime.setHours(parseInt(hours), parseInt(minutes), 0);
+
+                        const endTime = new Date(startTime);
+                        endTime.setHours(endTime.getHours() + 1); // 1 hour appointment
+
+                        const formatGoogleCalendarDate = (date: Date) => {
+                          return date.toISOString().replace(/-|:|\.\d+/g, '');
+                        };
+
+                        const title = encodeURIComponent(`Appointment with Dr. ${selectedDoctor.name}`);
+                        const details = encodeURIComponent(`${selectedDoctor.specialty} consultation${reason ? `\n\nReason: ${reason}` : ''}`);
+                        const location = encodeURIComponent('CareConnect Health Platform - Virtual');
+                        const start = formatGoogleCalendarDate(startTime);
+                        const end = formatGoogleCalendarDate(endTime);
+
+                        const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${start}/${end}`;
+
+                        window.open(googleCalendarUrl, '_blank');
+                        toast.success('Opening Google Calendar...');
+                      }}
+                      className="w-full btn-hero h-11"
+                      variant="default"
+                    >
+                      <Calendar size={18} className="mr-2" />
+                      Add to Google Calendar
+                    </Button>
+
+                    <Button
+                      onClick={async () => {
+                        try {
+                          // In a real app, you'd make an API call to cancel the appointment
+                          // await api.delete(`/appointments/${appointmentId}`);
+
+                          toast.success('Appointment cancelled successfully');
+                          setBookingConfirmed(false);
+                          setShowBookingModal(false);
+                          setSelectedDoctor(null);
+                          setSelectedDate(null);
+                          setSelectedTime(null);
+                          setReason('');
+                        } catch (error) {
+                          toast.error('Failed to cancel appointment');
+                        }
+                      }}
+                      className="w-full h-11"
+                      variant="outline"
+                    >
+                      <X size={18} className="mr-2" />
+                      Cancel Appointment
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <>
                   <div className="p-6 border-b border-border">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={selectedDoctor.avatar || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=faces'}
-                          alt={selectedDoctor.name}
-                          className="w-12 h-12 rounded-xl object-cover"
+                        <UserAvatar
+                          name={selectedDoctor.name}
+                          avatar={selectedDoctor.avatar}
+                          size="md"
                         />
                         <div>
                           <h2 className="font-display font-semibold">{selectedDoctor.name}</h2>

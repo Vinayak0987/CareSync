@@ -20,12 +20,10 @@
     "express-async-handler": "^1.2.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.5",
-<<<<<<< HEAD
-    "multer": "^2.0.2"
-=======
     "multer": "^2.0.2",
+    "nodemailer": "^7.0.13",
+    "socket.io": "^4.8.3",
     "tesseract.js": "^7.0.0"
->>>>>>> 738d57f630b902745335002f5776a466e48bb78e
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

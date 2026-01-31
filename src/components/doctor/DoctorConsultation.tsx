@@ -20,6 +20,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { PrescriptionPad } from './PrescriptionPad';
+import { socketService } from '@/lib/socket';
+import { toast } from 'sonner';
 
 // Type definition for appointment data - matches API response
 interface DoctorAppointment {
@@ -61,7 +63,15 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
   const [activeTab, setActiveTab] = useState<'vitals' | 'history' | 'prescription'>('vitals');
   const [callDuration, setCallDuration] = useState(0);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // WebRTC Refs
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+
+  // Get doctor info from localStorage
+  const userStr = localStorage.getItem('user');
+  const doctor = userStr ? JSON.parse(userStr) : null;
 
   // Call duration timer
   useEffect(() => {
@@ -85,37 +95,164 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
     }
   }, [messages]);
 
-  // Start webcam
+  // Socket.IO & WebRTC integration
   useEffect(() => {
-    if (!isVideoOff && videoRef.current) {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        })
-        .catch(err => console.error('Webcam error:', err));
-    }
+    if (!appointment.id || !doctor) return;
 
-    return () => {
-      if (videoRef.current?.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach(track => track.stop());
+    // Connect socket
+    socketService.connect();
+
+    // Join appointment room
+    socketService.joinAppointment(appointment.id);
+
+    // --- WebRTC Setup ---
+    const startWebRTC = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        // Show local video
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+
+        // Initialize PeerConnection
+        const peerConnection = new RTCPeerConnection({
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' }
+          ]
+        });
+
+        peerConnectionRef.current = peerConnection;
+
+        // Add local tracks to PeerConnection
+        stream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, stream);
+        });
+
+        // Handle remote stream
+        peerConnection.ontrack = (event) => {
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = event.streams[0];
+          }
+        };
+
+        // Handle ICE candidates
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            socketService.sendIceCandidate(appointment.id, event.candidate);
+          }
+        };
+
+        // --- Signaling Listeners ---
+
+        // Listen for incoming call (Offer)
+        socketService.onCallMade(async ({ offer }) => {
+          try {
+            if (peerConnection.signalingState !== 'stable') {
+              await Promise.all([
+                peerConnection.setLocalDescription({ type: "rollback" }),
+                peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
+              ]);
+            } else {
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            }
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            socketService.makeAnswer(appointment.id, answer);
+          } catch (e) {
+            console.error("Error responding to call offer:", e);
+          }
+        });
+
+        // Listen for Answer
+        socketService.onAnswerMade(async ({ answer }) => {
+          try {
+            // Only set remote description if we're expecting an answer
+            if (peerConnection.signalingState === "have-local-offer") {
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            }
+          } catch (e) {
+            console.error("Error handling answer:", e);
+          }
+        });
+
+        // Listen for ICE Candidates
+        socketService.onIceCandidateReceived(async ({ candidate }) => {
+          try {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (e) {
+            console.error("Error adding ice candidate:", e);
+          }
+        });
+
+        // Auto-initiate call from Doctor side too?
+        // To avoid collision if both auto-start, we rely on imperfect "glare" handling via rollback
+        // Or we just let both try and see.
+        // For robustness in this demo, having both try to call ensures connection even if one page reloads.
+        setTimeout(async () => {
+          try {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socketService.callUser(appointment.id, offer);
+          } catch (e) {
+            console.error("Error intiating call:", e);
+          }
+        }, 1500);
+
+      } catch (err) {
+        console.error("Error accessing media devices.", err);
+        toast.error("Could not access camera/microphone");
       }
     };
-  }, [isVideoOff]);
+
+    startWebRTC();
+
+    // Listen for incoming messages
+    socketService.onReceiveMessage((message: ChatMessage) => {
+      setMessages(prev => [...prev, message]);
+    });
+
+    // Handle errors
+    socketService.onMessageError((error) => {
+      toast.error(error.error || 'Failed to send message');
+    });
+
+    // Cleanup
+    return () => {
+      if (localVideoRef.current && localVideoRef.current.srcObject) {
+        const stream = localVideoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+      }
+      socketService.leaveAppointment(appointment.id);
+      socketService.offReceiveMessage();
+      socketService.offWebRTC();
+      socketService.disconnect();
+    };
+  }, [appointment.id, doctor]);
+
+  // Toggle Mute/Video logic
+  useEffect(() => {
+    if (localVideoRef.current && localVideoRef.current.srcObject) {
+      const stream = localVideoRef.current.srcObject as MediaStream;
+      stream.getAudioTracks().forEach(track => track.enabled = !isMuted);
+      stream.getVideoTracks().forEach(track => track.enabled = !isVideoOff);
+    }
+  }, [isMuted, isVideoOff]);
 
   const sendMessage = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !doctor) return;
 
-    const message: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'doctor',
+    socketService.sendMessage({
+      appointmentId: appointment.id,
+      senderId: doctor._id,
+      senderRole: 'doctor',
       message: newMessage,
-      timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    };
+    });
 
-    setMessages([...messages, message]);
     setNewMessage('');
   };
 
@@ -137,26 +274,36 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
         >
           {/* Patient Video (Main) */}
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-            <div className="text-center text-white/50">
-              <img
-                src={appointment.patientAvatar}
-                alt={appointment.patientName}
-                className="w-24 h-24 rounded-full mx-auto mb-3 border-4 border-white/20"
-              />
-              <p className="font-medium">{appointment.patientName}</p>
-              <p className="text-sm text-white/40">Video call in progress</p>
-            </div>
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+            />
+            {!remoteVideoRef.current?.srcObject && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center text-white/50">
+                  <img
+                    src={appointment.patientAvatar}
+                    alt={appointment.patientName}
+                    className="w-24 h-24 rounded-full mx-auto mb-3 border-4 border-white/20 opacity-50"
+                  />
+                  <p className="font-medium">Connecting...</p>
+                  <p className="text-sm text-white/40">Waiting for video stream</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Doctor Video (PiP) */}
-          <div className="absolute bottom-4 right-4 w-32 h-24 rounded-lg overflow-hidden border-2 border-white/20 bg-gray-800">
+          <div className="absolute bottom-4 right-4 w-32 h-24 rounded-lg overflow-hidden border-2 border-white/20 bg-gray-800 z-10">
             {isVideoOff ? (
               <div className="w-full h-full flex items-center justify-center bg-gray-800">
                 <User size={32} className="text-white/50" />
               </div>
             ) : (
               <video
-                ref={videoRef}
+                ref={localVideoRef}
                 autoPlay
                 muted
                 playsInline
@@ -166,19 +313,19 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
           </div>
 
           {/* Call Duration */}
-          <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-full">
+          <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-full z-10">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-white text-sm font-medium">{formatDuration(callDuration)}</span>
           </div>
 
           {/* Patient Info Overlay */}
-          <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-lg">
+          <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-lg z-10">
             <p className="text-white text-sm font-medium">{appointment.patientName}</p>
             <p className="text-white/60 text-xs">{appointment.age}y, {appointment.gender}</p>
           </div>
 
           {/* Controls */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
             <button
               onClick={() => setIsMuted(!isMuted)}
               className={cn(

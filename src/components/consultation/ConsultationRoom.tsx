@@ -1,56 +1,245 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Mic, MicOff, Video, VideoOff, Phone, MessageSquare, 
+import {
+  Mic, MicOff, Video, VideoOff, Phone, MessageSquare,
   Send, FileText, Maximize2, Minimize2, User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { doctors, mockChatMessages, currentPatient, type ChatMessage } from '@/lib/mockData';
+import { socketService } from '@/lib/socket';
+import { toast } from 'sonner';
+
+interface ChatMessage {
+  id: string;
+  sender: 'doctor' | 'patient';
+  message: string;
+  timestamp: string;
+}
 
 interface ConsultationRoomProps {
   onNavigate: (tab: string) => void;
+  appointmentId?: string;
+  doctorInfo?: {
+    _id: string;
+    name: string;
+    avatar?: string;
+    specialty?: string;
+  };
 }
 
-export function ConsultationRoom({ onNavigate }: ConsultationRoomProps) {
+export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId, doctorInfo: propsDoctorInfo }: ConsultationRoomProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [showChat, setShowChat] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>(mockChatMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const doctor = doctors[0]; // Using first doctor for demo
+  // WebRTC Refs
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+
+  // Get user info from localStorage
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+
+  // Get active consultation from localStorage (set when "Join Call" is clicked)
+  const consultationStr = localStorage.getItem('activeConsultation');
+  const consultation = consultationStr ? JSON.parse(consultationStr) : null;
+
+  // Use props if provided, otherwise fall back to localStorage
+  const appointmentId = propsAppointmentId || consultation?.appointmentId;
+  const doctor = propsDoctorInfo || (consultation ? {
+    _id: consultation.doctorId,
+    name: consultation.doctorName,
+    avatar: consultation.doctorAvatar,
+    specialty: consultation.doctorSpecialty
+  } : {
+    _id: '',
+    name: 'Doctor',
+    avatar: '',
+    specialty: 'General Physician'
+  });
+
+  // Validate we have a real appointment
+  if (!appointmentId || !appointmentId.match(/^[0-9a-fA-F]{24}$/)) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px] flex-col gap-4">
+        <p className="text-muted-foreground">No active consultation found.</p>
+        <Button onClick={() => onNavigate('appointments')}>
+          Go to Appointments
+        </Button>
+      </div>
+    );
+  }
+
+  useEffect(() => {
+    // Connect socket
+    const socket = socketService.connect();
+
+    // Join appointment room
+    socketService.joinAppointment(appointmentId);
+
+    // --- WebRTC Setup ---
+    const startWebRTC = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        // Show local video
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+          localVideoRef.current.muted = true; // Avoid feedback
+        }
+
+        // Initialize PeerConnection
+        const peerConnection = new RTCPeerConnection({
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' }
+          ]
+        });
+
+        peerConnectionRef.current = peerConnection;
+
+        // Add local tracks to PeerConnection
+        stream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, stream);
+        });
+
+        // Handle remote stream
+        peerConnection.ontrack = (event) => {
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = event.streams[0];
+          }
+        };
+
+        // Handle ICE candidates
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            socketService.sendIceCandidate(appointmentId, event.candidate);
+          }
+        };
+
+        // --- Signaling Listeners ---
+
+        // Listen for incoming call (Offer)
+        socketService.onCallMade(async ({ offer }) => {
+          try {
+            if (peerConnection.signalingState !== 'stable') {
+              // Determine if we need to rollback to accept new offer or just ignore
+              // Simple handling:
+              await Promise.all([
+                peerConnection.setLocalDescription({ type: "rollback" }),
+                peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
+              ]);
+            } else {
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            }
+
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            socketService.makeAnswer(appointmentId, answer);
+          } catch (e) {
+            console.error("Error handling call offer:", e);
+          }
+        });
+
+        // Listen for Answer
+        socketService.onAnswerMade(async ({ answer }) => {
+          try {
+            if (peerConnection.signalingState === 'have-local-offer') {
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            }
+          } catch (e) {
+            console.error("Error setting remote description from answer:", e);
+          }
+        });
+
+        // Listen for ICE Candidates
+        socketService.onIceCandidateReceived(async ({ candidate }) => {
+          try {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (e) {
+            console.error("Error adding ice candidate:", e);
+          }
+        });
+
+        // Auto-call (patient calls doctor)
+        // Wait briefly for socket to maximize connect chance
+        setTimeout(async () => {
+          try {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socketService.callUser(appointmentId, offer);
+          } catch (e) {
+            console.error("Error creating offer:", e);
+          }
+        }, 1000);
+
+      } catch (err) {
+        console.error("Error accessing media devices.", err);
+        toast.error("Could not access camera/microphone");
+      }
+    };
+
+    startWebRTC();
+
+    // Listen for incoming messages
+    socketService.onReceiveMessage((message: ChatMessage) => {
+      setMessages(prev => [...prev, message]);
+    });
+
+    // Handle errors
+    socketService.onMessageError((error) => {
+      toast.error(error.error || 'Failed to send message');
+    });
+
+    // Cleanup
+    return () => {
+      // Stop all tracks
+      if (localVideoRef.current && localVideoRef.current.srcObject) {
+        const stream = localVideoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+      }
+      socketService.leaveAppointment(appointmentId);
+      socketService.offReceiveMessage();
+      socketService.offWebRTC();
+      socketService.disconnect();
+    };
+  }, [appointmentId]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = () => {
-    if (!newMessage.trim()) return;
-    
-    const msg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'patient',
-      message: newMessage,
-      timestamp: new Date().toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' }),
-    };
-    
-    setMessages(prev => [...prev, msg]);
-    setNewMessage('');
+  // Toggle Mute/Video logic
+  useEffect(() => {
+    // Access stream from the video element directly or store in state
+    // videoRef.current!.srcObject is strictly typed, casting needed or cleaner state mgmt
+    if (localVideoRef.current && localVideoRef.current.srcObject) {
+      const stream = localVideoRef.current.srcObject as MediaStream;
+      stream.getAudioTracks().forEach(track => track.enabled = !isMuted);
+      stream.getVideoTracks().forEach(track => track.enabled = !isVideoOff);
+    }
+  }, [isMuted, isVideoOff]);
 
-    // Simulate doctor response
-    setTimeout(() => {
-      const response: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: 'doctor',
-        message: 'Thank you for sharing that. Let me review your information.',
-        timestamp: new Date().toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' }),
-      };
-      setMessages(prev => [...prev, response]);
-    }, 2000);
+  const sendMessage = () => {
+    if (!newMessage.trim() || !user) return;
+
+    socketService.sendMessage({
+      appointmentId,
+      senderId: user._id,
+      senderRole: 'patient',
+      message: newMessage,
+    });
+
+    setNewMessage('');
   };
 
   const endCall = () => {
@@ -112,38 +301,48 @@ export function ConsultationRoom({ onNavigate }: ConsultationRoomProps) {
             showChat ? "lg:col-span-2" : "lg:col-span-3"
           )}
         >
-          {/* Doctor Video (main) */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <img
-                src={doctor.avatar}
-                alt={doctor.name}
-                className="w-32 h-32 rounded-full object-cover mx-auto mb-4 ring-4 ring-primary/20"
-              />
-              <p className="text-lg font-medium">{doctor.name}</p>
-              <p className="text-sm text-muted-foreground">Video consultation in progress</p>
-            </div>
+          {/* Remote Video (Doctor) */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black">
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+            />
+            {/* Fallback/Loader if video not ready */}
+            {!remoteVideoRef.current?.srcObject && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center text-white/50">
+                  <img
+                    src={doctor.avatar}
+                    alt={doctor.name}
+                    className="w-32 h-32 rounded-full object-cover mx-auto mb-4 ring-4 ring-white/20 opacity-50"
+                  />
+                  <p className="text-lg font-medium">Connecting...</p>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Self view (PiP) */}
-          <div className="absolute bottom-4 right-4 w-32 h-24 sm:w-40 sm:h-28 bg-foreground/10 rounded-xl overflow-hidden border-2 border-background shadow-lg">
+          {/* Local Video (Self view PiP) */}
+          <div className="absolute bottom-4 right-4 w-32 h-24 sm:w-40 sm:h-28 bg-foreground/10 rounded-xl overflow-hidden border-2 border-background shadow-lg z-10">
             {isVideoOff ? (
               <div className="w-full h-full flex items-center justify-center bg-muted">
                 <User size={32} className="text-muted-foreground" />
               </div>
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <img
-                  src={currentPatient.avatar}
-                  alt="You"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
             )}
           </div>
 
           {/* Call timer */}
-          <div className="absolute top-4 left-4 px-3 py-1.5 bg-foreground/80 text-background rounded-full text-sm font-medium">
+          <div className="absolute top-4 left-4 px-3 py-1.5 bg-foreground/80 text-background rounded-full text-sm font-medium z-10">
             12:34
           </div>
         </motion.div>

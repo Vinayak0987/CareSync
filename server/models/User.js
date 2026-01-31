@@ -45,8 +45,6 @@ const userSchema = mongoose.Schema(
       phone: { type: String },
     },
     allergies: { type: String },
-<<<<<<< HEAD
-
     // Chronic Disease Management
     chronicDisease: {
       type: String,
@@ -88,8 +86,6 @@ const userSchema = mongoose.Schema(
         default: [0, 0],
       },
     },
-=======
->>>>>>> 738d57f630b902745335002f5776a466e48bb78e
   },
   {
     timestamps: true,

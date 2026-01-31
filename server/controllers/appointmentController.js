@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const { sendAppointmentBookingEmail, sendAppointmentCancellationEmail } = require('../utils/emailService');
 
 // @desc    Book an appointment
 // @route   POST /api/appointments
@@ -22,6 +23,25 @@ const bookAppointment = asyncHandler(async (req, res) => {
   });
 
   if (appointment) {
+    // Fetch doctor and patient details for email
+    const doctor = await User.findById(doctorId);
+    const patient = req.user;
+
+    // Send email notifications
+    if (doctor && patient) {
+      sendAppointmentBookingEmail(
+        patient.email,
+        doctor.email,
+        {
+          patientName: patient.name,
+          doctorName: doctor.name,
+          date,
+          time,
+          reason: reason || 'General Consultation'
+        }
+      );
+    }
+
     res.status(201).json(appointment);
   } else {
     res.status(400);
@@ -182,11 +202,62 @@ const getDoctorStats = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Cancel/Delete an appointment
+// @route   DELETE /api/appointments/:id
+// @access  Private
+const cancelAppointment = asyncHandler(async (req, res) => {
+  const appointment = await Appointment.findById(req.params.id)
+    .populate('patientId', 'name email')
+    .populate('doctorId', 'name email');
+
+  if (!appointment) {
+    res.status(404);
+    throw new Error('Appointment not found');
+  }
+
+  // Verify ownership - patient who booked it or the doctor
+  if (
+    appointment.patientId._id.toString() !== req.user.id &&
+    appointment.doctorId._id.toString() !== req.user.id &&
+    req.user.role !== 'admin'
+  ) {
+    res.status(401);
+    throw new Error('Not authorized to cancel this appointment');
+  }
+
+  // Determine who cancelled the appointment
+  const cancelledBy = appointment.patientId._id.toString() === req.user.id
+    ? 'Patient'
+    : appointment.doctorId._id.toString() === req.user.id
+      ? 'Doctor'
+      : 'Admin';
+
+  // Send cancellation emails before deleting
+  if (appointment.patientId && appointment.doctorId) {
+    sendAppointmentCancellationEmail(
+      appointment.patientId.email,
+      appointment.doctorId.email,
+      {
+        patientName: appointment.patientId.name,
+        doctorName: appointment.doctorId.name,
+        date: appointment.date,
+        time: appointment.time,
+        cancelledBy
+      }
+    );
+  }
+
+  await appointment.deleteOne();
+
+  res.json({ message: 'Appointment cancelled successfully' });
+});
+
 module.exports = {
   bookAppointment,
   getMyAppointments,
   getAllAppointments: getMyAppointments,  // Alias for cleaner routing
   updateAppointment,
+  cancelAppointment,
   getTodaysAppointments,
   getDoctorStats,
 };
