@@ -49,10 +49,7 @@ const userSchema = mongoose.Schema(
       phone: { type: String },
     },
     allergies: { type: String },
-<<<<<<< HEAD
-=======
 
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
     // Chronic Disease Management
     chronicDisease: {
       type: String,

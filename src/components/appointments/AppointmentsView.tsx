@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, Star, ChevronLeft, ChevronRight, Search, Filter, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { cn } from '@/lib/utils';
-import { doctors, availableTimeSlots, type Doctor } from '@/lib/mockData';
+import { availableTimeSlots, type Doctor } from '@/lib/mockData';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/i18n';
+import api from '@/lib/api';
 
 interface AppointmentsViewProps {
   onNavigate: (tab: string) => void;
@@ -19,13 +20,14 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
   const { t, td, language } = useLanguage();
   const [specialty, setSpecialty] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
-<<<<<<< HEAD
   const [isBooking, setIsBooking] = useState(false);
 
   // Track booked appointments - map of doctorId to appointment details
@@ -83,8 +85,6 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
       setIsLoading(false);
     }
   };
-=======
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
 
   // Generate calendar dates
   const today = new Date();
@@ -110,11 +110,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
   const filteredDoctors = doctors.filter(doc => {
     const matchesSpecialty = specialty === 'all' || doc.specialty.toLowerCase().includes(specialty.toLowerCase());
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-<<<<<<< HEAD
       (doc.specialty && doc.specialty.toLowerCase().includes(searchQuery.toLowerCase()));
-=======
-                          doc.specialty.toLowerCase().includes(searchQuery.toLowerCase());
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
     return matchesSpecialty && matchesSearch;
   });
 
@@ -123,7 +119,6 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
     setShowBookingModal(true);
   };
 
-<<<<<<< HEAD
   const confirmBooking = async () => {
     if (!selectedDate || !selectedTime || !selectedDoctor) return;
 
@@ -173,23 +168,6 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
     } finally {
       setIsBooking(false);
     }
-=======
-  const confirmBooking = () => {
-    if (!selectedDate || !selectedTime) return;
-    
-    setBookingConfirmed(true);
-    setTimeout(() => {
-      setShowBookingModal(false);
-      setBookingConfirmed(false);
-      setSelectedDoctor(null);
-      setSelectedDate(null);
-      setSelectedTime(null);
-      setReason('');
-      toast.success(t('bookingConfirmed' as any) || 'Appointment booked successfully!', {
-        description: `${selectedDoctor?.name} - ${dates[selectedDate].toLocaleDateString(getLocale())} ${selectedTime}`,
-      });
-    }, 2000);
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
   };
 
   // Specialty options with translations
@@ -253,17 +231,10 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
             className="vitals-card"
           >
             <div className="flex flex-col sm:flex-row gap-4">
-<<<<<<< HEAD
               <UserAvatar
                 name={doctor.name}
                 avatar={doctor.avatar}
                 size="xl"
-=======
-              <img
-                src={doctor.avatar}
-                alt={doctor.name}
-                className="w-20 h-20 rounded-xl object-cover ring-2 ring-primary/10"
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
               />
               <div className="flex-1">
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
@@ -280,7 +251,6 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                   {doctor.experience} {td('years experience')}
                 </p>
                 <div className="flex flex-wrap items-center justify-center sm:justify-between gap-3 mt-4 pt-3 border-t border-border/50">
-<<<<<<< HEAD
                   {bookedAppointments[doctor._id] ? (
                     // Show booked status and action buttons
                     <div className="w-full space-y-3">
@@ -379,29 +349,6 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                       </Button>
                     </>
                   )}
-=======
-                  {doctor.available ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success/10 text-success text-xs font-medium rounded-full">
-                      <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
-                      {td('available now')}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
-                      {t('nextAvailableAt' as any) || 'Next available:'} {doctor.nextAvailable}
-                    </span>
-                  )}
-                  <Button 
-                    onClick={() => handleBook(doctor)}
-                    size="sm"
-                    className={cn(
-                      "w-full sm:w-auto min-w-[140px]",
-                      doctor.available ? 'btn-hero text-sm py-2' : ''
-                    )}
-                    variant={doctor.available ? 'default' : 'outline'}
-                  >
-                    {t('bookAppointment')}
-                  </Button>
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
                 </div>
               </div>
             </div>
@@ -450,7 +397,6 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                   >
                     <Check size={40} className="text-success-foreground" />
                   </motion.div>
-<<<<<<< HEAD
 
                   <h2 className="font-display font-bold text-2xl mb-2 text-center">Appointment Booked!</h2>
                   <p className="text-muted-foreground text-center mb-6">
@@ -542,27 +488,16 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                       Cancel Appointment
                     </Button>
                   </div>
-=======
-                  <h2 className="font-display font-bold text-2xl mb-2">{t('bookingConfirmed' as any) || 'Booking Confirmed!'}</h2>
-                  <p className="text-muted-foreground">{t('appointmentScheduled' as any) || 'Your appointment has been scheduled'}</p>
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
                 </div>
               ) : (
                 <>
                   <div className="p-6 border-b border-border">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-<<<<<<< HEAD
                         <UserAvatar
                           name={selectedDoctor.name}
                           avatar={selectedDoctor.avatar}
                           size="md"
-=======
-                        <img
-                          src={selectedDoctor.avatar}
-                          alt={selectedDoctor.name}
-                          className="w-12 h-12 rounded-xl object-cover"
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
                         />
                         <div>
                           <h2 className="font-display font-semibold">{selectedDoctor.name}</h2>

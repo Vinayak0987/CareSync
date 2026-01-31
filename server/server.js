@@ -8,16 +8,10 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
-<<<<<<< HEAD
 const Message = require('./models/Message');
 
 // Configure Multer for temp uploads
 const upload = multer({ dest: path.join(__dirname, 'uploads/') }); // Store in local uploads folder for cleanup logic verification
-=======
-
-// Configure Multer for temp uploads
-const upload = multer({ dest: path.join(__dirname, 'uploads/') });
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
 
 // Load env vars
 dotenv.config();
@@ -45,11 +39,7 @@ app.use('/api/medicines', require('./routes/medicineRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 
-<<<<<<< HEAD
 // Upload Report Endpoint
-=======
-// Upload Report Endpoint (Merged from HEAD)
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
 app.post('/api/upload-report', upload.single('report'), async (req, res) => {
   console.log('Received file upload request');
   if (!req.file) {
@@ -157,15 +147,11 @@ app.post('/api/upload-report', upload.single('report'), async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-=======
 // Additional Routes (Merged from Remote)
 app.use('/api/posts', require('./routes/postRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
 app.use(require('./middleware/errorMiddleware').errorHandler);
-
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
 const PORT = process.env.PORT || 5000;
 
 // Create HTTP server for Socket.IO

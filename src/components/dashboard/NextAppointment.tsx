@@ -4,7 +4,7 @@ import { Calendar, Clock, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import api from '@/lib/api';
-import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { useLanguage } from '@/lib/i18n';
 
 interface Appointment {
   _id: string;
@@ -34,14 +34,10 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
 
         // Find next upcoming appointment (confirmed or pending, in the future)
         const upcoming = appointments
-<<<<<<< HEAD
           .filter((apt: Appointment) => {
             const aptDate = new Date(apt.date);
             return (apt.status === 'confirmed' || apt.status === 'pending') && aptDate >= now;
           })
-=======
-          .filter((apt: Appointment) => apt.status === 'pending' || apt.status === 'confirmed')
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
           .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
         setAppointment(upcoming);
@@ -76,7 +72,7 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
         animate={{ opacity: 1, y: 0 }}
         className="bg-card rounded-xl p-6 border border-border shadow-sm"
       >
-        <p className="text-muted-foreground text-center">{t('noData')}</p>
+        <p className="text-muted-foreground text-center">{t('noData') || 'No upcoming appointments'}</p>
       </motion.div>
     );
   }
@@ -105,7 +101,7 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
           />
 
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground mb-0.5">Next Appointment</p>
+            <p className="text-xs text-muted-foreground mb-0.5">{t('nextAppointment') || 'Next Appointment'}</p>
             <h3 className="font-display font-semibold text-lg text-foreground">
               Dr. {appointment.doctorId?.name || 'Unknown'}
             </h3>
@@ -113,30 +109,13 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
           </div>
         </div>
 
-<<<<<<< HEAD
         {/* Reason (if exists) */}
         {appointment.reason && (
           <div className="text-sm text-muted-foreground bg-muted/40 p-3 rounded-lg border border-border/50">
-            <span className="font-medium text-foreground text-xs uppercase tracking-wider block mb-1">Reason</span>
+            <span className="font-medium text-foreground text-xs uppercase tracking-wider block mb-1">{t('reason') || 'Reason'}</span>
             {appointment.reason}
           </div>
         )}
-=======
-        {/* Appointment Details */}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground mb-0.5">{t('nextAppointment')}</p>
-          <h3 className="font-display font-semibold text-lg text-foreground">
-            Dr. {appointment.doctorId?.name || 'Unknown'}
-          </h3>
-          <p className="text-sm text-primary font-medium">{appointment.doctorId?.specialty || 'General'}</p>
-          
-          {appointment.reason && (
-            <p className="text-sm text-muted-foreground mt-2">
-              <span className="font-medium text-foreground">{t('reason')}:</span> {appointment.reason}
-            </p>
-          )}
-        </div>
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
 
         {/* Time and Action */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-border">
@@ -166,13 +145,8 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
             size="sm"
             className="btn-hero flex items-center gap-2 shadow-sm"
           >
-<<<<<<< HEAD
             <Video size={16} />
-            Join Call
-=======
-            <Video size={18} />
-            {t('joinCall')}
->>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
+            {t('joinCall') || 'Join Call'}
           </Button>
         </div>
       </div>
