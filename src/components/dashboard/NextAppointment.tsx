@@ -31,49 +31,51 @@ export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProp
       animate={{ opacity: 1, y: 0 }}
       className="bg-card rounded-xl p-5 border border-border shadow-sm"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        {/* Doctor Avatar */}
-        <div className="flex-shrink-0">
+      <div className="flex flex-col gap-4">
+        {/* Top Section: Avatar & Info */}
+        <div className="flex items-start gap-4">
           <img
             src={doctor?.avatar || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face'}
             alt={appointment.doctorName}
-            className="w-16 h-16 rounded-xl object-cover ring-2 ring-primary/10"
+            className="w-14 h-14 rounded-xl object-cover ring-2 ring-primary/10 flex-shrink-0"
           />
+
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide font-semibold">Next Appointment</p>
+            <h3 className="font-display font-semibold text-base text-foreground leading-tight mb-1">
+              {appointment.doctorName}
+            </h3>
+            <p className="text-sm text-primary font-medium">{appointment.specialty}</p>
+          </div>
         </div>
 
-        {/* Appointment Details */}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground mb-0.5">Next Appointment</p>
-          <h3 className="font-display font-semibold text-lg text-foreground">
-            {appointment.doctorName}
-          </h3>
-          <p className="text-sm text-primary font-medium">{appointment.specialty}</p>
-          
-          {appointment.reason && (
-            <p className="text-sm text-muted-foreground mt-2">
-              <span className="font-medium text-foreground">Reason:</span> {appointment.reason}
-            </p>
-          )}
-        </div>
+        {/* Reason (if exists) */}
+        {appointment.reason && (
+          <div className="text-sm text-muted-foreground bg-muted/40 p-3 rounded-lg border border-border/50">
+            <span className="font-medium text-foreground text-xs uppercase tracking-wider block mb-1">Reason</span>
+            {appointment.reason}
+          </div>
+        )}
 
         {/* Time and Action */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Calendar size={16} />
+        <div className="flex items-center justify-between pt-2 border-t border-border mt-1">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar size={14} />
               <span className="font-medium text-foreground">{appointment.date}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Clock size={16} />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock size={14} />
               <span className="font-medium text-foreground">{appointment.time}</span>
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={onJoinCall}
-            className="btn-hero flex items-center gap-2 whitespace-nowrap"
+            size="sm"
+            className="btn-hero flex items-center gap-2 shadow-sm"
           >
-            <Video size={18} />
+            <Video size={16} />
             Join Call
           </Button>
         </div>

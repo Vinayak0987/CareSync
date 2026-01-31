@@ -46,6 +46,30 @@ const userSchema = mongoose.Schema(
     },
     allergies: { type: String },
 
+    // Chronic Disease Management
+    chronicDisease: {
+      type: String,
+      enum: ['Diabetes', 'Hypertension', 'Heart Disease', 'COPD', 'Kidney Disease', 'None', 'General'],
+      default: 'None'
+    },
+    // Extracted constants from reports (that don't change daily)
+    healthProfile: {
+      age: Number,
+      gender: String, // 1/0 for ML models
+      height: Number,
+      weight: Number,
+      base_hba1c: Number,
+      base_cholesterol: Number,
+      base_bp_systolic: Number,
+      base_bp_diastolic: Number,
+      risk_score: Number // Last calculated risk score
+    },
+    // Which vitals should this user track daily?
+    monitoringConfig: {
+      type: [String], // e.g. ['blood_sugar', 'blood_pressure']
+      default: ['blood_pressure', 'heart_rate'] // Default for general
+    },
+
     // Pharmacy/Medical Store specific fields
     storeName: { type: String },
     storeLicense: { type: String },
@@ -70,9 +94,9 @@ const userSchema = mongoose.Schema(
 );
 
 // Encrypt password using bcrypt
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.isModified('password')) {
-    next();
+    return;
   }
 
   const salt = await bcrypt.genSalt(10);

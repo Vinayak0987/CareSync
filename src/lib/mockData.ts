@@ -58,6 +58,7 @@ export const currentPatient = {
   name: 'Ravi Kumar',
   age: 45,
   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+  conditions: ['Hypertension', 'Diabetes Type 2'],
 };
 
 export const doctors: Doctor[] = [
