@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -8,43 +8,23 @@ import {
   Package,
   X,
   Save,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import {
-  productCategories,
-  type InventoryProduct
-} from '@/lib/mockData';
-
-// Initial pharmacy products data
-const initialProducts: InventoryProduct[] = [
-  { id: 'inv-001', name: 'Paracetamol 500mg', category: 'Pain Relief', price: 45, stock: 250, minStock: 50, status: 'in-stock', image: '💊', prescription: false, supplier: 'Cipla', lastRestocked: '2026-01-28' },
-  { id: 'inv-002', name: 'Amlodipine 5mg', category: 'Heart Health', price: 120, stock: 85, minStock: 30, status: 'in-stock', image: '❤️', prescription: true, supplier: 'Sun Pharma', lastRestocked: '2026-01-25' },
-  { id: 'inv-003', name: 'Insulin Glargine', category: 'Diabetes', price: 850, stock: 8, minStock: 15, status: 'low-stock', image: '💉', prescription: true, supplier: 'Novo Nordisk', lastRestocked: '2026-01-20' },
-  { id: 'inv-004', name: 'Metformin 500mg', category: 'Diabetes', price: 85, stock: 120, minStock: 40, status: 'in-stock', image: '💊', prescription: true, supplier: "Dr. Reddy's", lastRestocked: '2026-01-27' },
-  { id: 'inv-005', name: 'Cetirizine 10mg', category: 'Allergy', price: 35, stock: 0, minStock: 25, status: 'out-of-stock', image: '🤧', prescription: false, supplier: 'Cipla', lastRestocked: '2026-01-15' },
-  { id: 'inv-006', name: 'Omeprazole 20mg', category: 'Digestive', price: 95, stock: 65, minStock: 20, status: 'in-stock', image: '💊', prescription: true, supplier: 'Lupin', lastRestocked: '2026-01-26' },
-  { id: 'inv-007', name: 'Aspirin 75mg', category: 'Heart Health', price: 55, stock: 12, minStock: 25, status: 'low-stock', image: '❤️', prescription: true, supplier: 'Bayer', lastRestocked: '2026-01-22' },
-  { id: 'inv-008', name: 'Vitamin D3 1000IU', category: 'Supplements', price: 250, stock: 180, minStock: 30, status: 'in-stock', image: '☀️', prescription: false, supplier: 'HealthKart', lastRestocked: '2026-01-29' },
-  { id: 'inv-009', name: 'Blood Pressure Monitor', category: 'Devices', price: 1299, stock: 15, minStock: 5, status: 'in-stock', image: '🩺', prescription: false, supplier: 'Omron', lastRestocked: '2026-01-24' },
-  { id: 'inv-010', name: 'Glucose Test Strips', category: 'Diabetes', price: 450, stock: 5, minStock: 20, status: 'low-stock', image: '🩸', prescription: false, supplier: 'Accu-Chek', lastRestocked: '2026-01-18' },
-  { id: 'inv-011', name: 'Azithromycin 500mg', category: 'Antibiotics', price: 180, stock: 75, minStock: 25, status: 'in-stock', image: '💊', prescription: true, supplier: 'Zydus', lastRestocked: '2026-01-30' },
-  { id: 'inv-012', name: 'Pantoprazole 40mg', category: 'Digestive', price: 110, stock: 90, minStock: 30, status: 'in-stock', image: '💊', prescription: true, supplier: 'Alkem', lastRestocked: '2026-01-28' },
-  { id: 'inv-013', name: 'Multivitamin Tablets', category: 'Supplements', price: 320, stock: 200, minStock: 40, status: 'in-stock', image: '💪', prescription: false, supplier: 'Himalaya', lastRestocked: '2026-01-31' },
-  { id: 'inv-014', name: 'Ibuprofen 400mg', category: 'Pain Relief', price: 60, stock: 3, minStock: 30, status: 'low-stock', image: '💊', prescription: false, supplier: 'Abbott', lastRestocked: '2026-01-10' },
-  { id: 'inv-015', name: 'Digital Thermometer', category: 'Devices', price: 299, stock: 25, minStock: 10, status: 'in-stock', image: '🌡️', prescription: false, supplier: 'Dr. Trust', lastRestocked: '2026-01-27' },
-];
+import { productCategories } from '@/lib/mockData';
+import { useProducts, type InventoryProduct } from '@/contexts/ProductContext';
 
 export function ProductsManager() {
-  const [products, setProducts] = useState<InventoryProduct[]>(initialProducts);
+  const { products, loading, fetchProducts, addProduct, updateStock, deleteProduct } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<InventoryProduct | null>(null);
+  const [savingProduct, setSavingProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: '',
     category: 'Pain Relief',
@@ -58,6 +38,11 @@ export function ProductsManager() {
 
   // Validation errors state
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // Refresh products on mount
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -106,37 +91,45 @@ export function ProductsManager() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     // Validate form before submission
     if (!validateForm()) {
       toast.error('Please fix the errors in the form');
       return;
     }
 
-    const product: InventoryProduct = {
-      id: `inv-${Date.now()}`,
-      ...newProduct,
-      name: newProduct.name.trim(),
-      supplier: newProduct.supplier.trim(),
-      status: newProduct.stock === 0 ? 'out-of-stock' :
-        newProduct.stock < newProduct.minStock ? 'low-stock' : 'in-stock',
-      lastRestocked: new Date().toISOString().split('T')[0],
-    };
+    setSavingProduct(true);
+    try {
+      await addProduct({
+        name: newProduct.name.trim(),
+        category: newProduct.category,
+        price: newProduct.price,
+        stock: newProduct.stock,
+        minStock: newProduct.minStock,
+        image: newProduct.image,
+        prescription: newProduct.prescription,
+        supplier: newProduct.supplier.trim(),
+      });
 
-    setProducts([...products, product]);
-    setShowAddModal(false);
-    setNewProduct({
-      name: '',
-      category: 'Pain Relief',
-      price: 0,
-      stock: 0,
-      minStock: 10,
-      image: '💊',
-      prescription: false,
-      supplier: '',
-    });
-    setErrors({});
-    toast.success('Product added successfully!');
+      setShowAddModal(false);
+      setNewProduct({
+        name: '',
+        category: 'Pain Relief',
+        price: 0,
+        stock: 0,
+        minStock: 10,
+        image: '💊',
+        prescription: false,
+        supplier: '',
+      });
+      setErrors({});
+      toast.success('Product added successfully!');
+    } catch (error) {
+      console.error('Failed to add product:', error);
+      toast.error('Failed to add product. Please try again.');
+    } finally {
+      setSavingProduct(false);
+    }
   };
 
   // Clear errors when modal closes
@@ -155,21 +148,24 @@ export function ProductsManager() {
     });
   };
 
-  const handleUpdateStock = (id: string, newStock: number) => {
-    setProducts(products.map(p => {
-      if (p.id === id) {
-        const status = newStock === 0 ? 'out-of-stock' :
-          newStock < p.minStock ? 'low-stock' : 'in-stock';
-        return { ...p, stock: newStock, status };
-      }
-      return p;
-    }));
-    toast.success('Stock updated!');
+  const handleUpdateStock = async (id: string, newStock: number) => {
+    try {
+      await updateStock(id, newStock);
+      toast.success('Stock updated!');
+    } catch (error) {
+      console.error('Failed to update stock:', error);
+      toast.error('Failed to update stock');
+    }
   };
 
-  const handleDeleteProduct = (id: string) => {
-    setProducts(products.filter(p => p.id !== id));
-    toast.success('Product deleted!');
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      await deleteProduct(id);
+      toast.success('Product deleted!');
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+      toast.error('Failed to delete product');
+    }
   };
 
   const getStatusColor = (status: InventoryProduct['status']) => {
@@ -179,6 +175,17 @@ export function ProductsManager() {
       case 'out-of-stock': return 'bg-red-100 text-red-700';
     }
   };
+
+  if (loading && products.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary mb-4" />
+          <p className="text-muted-foreground">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -304,12 +311,6 @@ export function ProductsManager() {
                   <td className="p-4">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setEditingProduct(product)}
-                        className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
                         onClick={() => handleDeleteProduct(product.id)}
                         className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors"
                       >
@@ -327,6 +328,7 @@ export function ProductsManager() {
           <div className="p-12 text-center">
             <Package size={48} className="mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">No products found</p>
+            <p className="text-sm text-muted-foreground mt-1">Add your first product to get started</p>
           </div>
         )}
       </motion.div>
@@ -481,9 +483,22 @@ export function ProductsManager() {
                 <Button variant="outline" className="flex-1 h-11" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button className="flex-1 h-11 btn-hero" onClick={handleAddProduct}>
-                  <Save size={16} className="mr-2" />
-                  Add Product
+                <Button
+                  className="flex-1 h-11 btn-hero"
+                  onClick={handleAddProduct}
+                  disabled={savingProduct}
+                >
+                  {savingProduct ? (
+                    <>
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={16} className="mr-2" />
+                      Add Product
+                    </>
+                  )}
                 </Button>
               </div>
             </motion.div>

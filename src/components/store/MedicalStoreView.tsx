@@ -1,39 +1,19 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ShoppingCart, Plus, Minus, Upload, X, Check, FileText, Filter, Package, Clock, Truck, CheckCircle, MapPin } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Upload, X, Check, FileText, Filter, Package, Clock, Truck, CheckCircle, MapPin, AlertTriangle, Shield, Stethoscope, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useOrders } from '@/contexts/OrderContext';
+import { useProducts, type StoreProduct } from '@/contexts/ProductContext';
 import { currentPatient } from '@/lib/mockData';
 
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  image: string;
-  inStock: boolean;
-  prescription: boolean;
-}
+// Product type alias for clarity
+type Product = StoreProduct;
 
-const products: Product[] = [
-  { id: '1', name: 'Paracetamol 500mg', category: 'Pain Relief', price: 45, image: '💊', inStock: true, prescription: false },
-  { id: '2', name: 'Amlodipine 5mg', category: 'Heart Health', price: 120, image: '❤️', inStock: true, prescription: true },
-  { id: '3', name: 'Cetirizine 10mg', category: 'Allergy', price: 35, image: '🤧', inStock: true, prescription: false },
-  { id: '4', name: 'Metformin 500mg', category: 'Diabetes', price: 85, image: '💉', inStock: true, prescription: true },
-  { id: '5', name: 'Vitamin D3', category: 'Supplements', price: 250, image: '☀️', inStock: true, prescription: false },
-  { id: '6', name: 'Aspirin 75mg', category: 'Heart Health', price: 55, image: '❤️', inStock: false, prescription: true },
-  { id: '7', name: 'Omeprazole 20mg', category: 'Digestive', price: 95, image: '🫃', inStock: true, prescription: true },
-  { id: '8', name: 'Multivitamin Plus', category: 'Supplements', price: 320, image: '💪', inStock: true, prescription: false },
-  { id: '9', name: 'Insulin Glargine', category: 'Diabetes', price: 850, image: '💉', inStock: true, prescription: true },
-  { id: '10', name: 'Blood Pressure Monitor', category: 'Devices', price: 1299, image: '🩺', inStock: true, prescription: false },
-  { id: '11', name: 'Oximeter', category: 'Devices', price: 699, image: '📟', inStock: true, prescription: false },
-  { id: '12', name: 'Glucose Test Strips', category: 'Diabetes', price: 450, image: '🩸', inStock: true, prescription: false },
-];
-
-const categories = ['All', 'Pain Relief', 'Heart Health', 'Allergy', 'Diabetes', 'Supplements', 'Digestive', 'Devices'];
+// Default categories (will be extended by products from DB)
+const defaultCategories = ['All', 'Pain Relief', 'Heart Health', 'Allergy', 'Diabetes', 'Supplements', 'Digestive', 'Devices', 'Antibiotics'];
 
 interface CartItem {
   product: Product;
@@ -50,11 +30,24 @@ export function MedicalStoreView() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [prescriptionUploaded, setPrescriptionUploaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const { orders, addOrder, getPatientOrders } = useOrders();
+
+  const { addOrder, getPatientOrders } = useOrders();
+  const { storeProducts, loading, fetchStoreProducts } = useProducts();
   const patientOrders = getPatientOrders(currentPatient.name);
 
-  const filteredProducts = products.filter(p => {
+  // Fetch store products on mount
+  useEffect(() => {
+    fetchStoreProducts();
+  }, [fetchStoreProducts]);
+
+  // Derive categories from products
+  const categories = useMemo(() => {
+    const productCategories = [...new Set(storeProducts.map(p => p.category))];
+    return ['All', ...defaultCategories.filter(c => c !== 'All'), ...productCategories.filter(c => !defaultCategories.includes(c))];
+  }, [storeProducts]);
+
+  // Use storeProducts from context
+  const filteredProducts = storeProducts.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.category.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
@@ -73,8 +66,8 @@ export function MedicalStoreView() {
     setCart(prev => {
       const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
-        return prev.map(item => 
-          item.product.id === product.id 
+        return prev.map(item =>
+          item.product.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -85,7 +78,7 @@ export function MedicalStoreView() {
   };
 
   const updateQuantity = (productId: string, delta: number) => {
-    setCart(prev => 
+    setCart(prev =>
       prev.map(item => {
         if (item.product.id === productId) {
           const newQty = item.quantity + delta;
@@ -109,7 +102,7 @@ export function MedicalStoreView() {
 
   const handleUploadPrescription = () => {
     if (!uploadedFile) return;
-    
+
     // Simulate upload
     toast.success('Prescription uploaded successfully!', {
       description: 'You can now order prescription medicines',
@@ -122,35 +115,42 @@ export function MedicalStoreView() {
   const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const checkout = () => {
+  const checkout = async () => {
     // Create order using the shared context
     const hasPrescriptionItems = cart.some(item => item.product.prescription);
-    
+
     console.log('Checkout called with cart:', cart);
     console.log('Creating order for:', currentPatient.name);
-    
-    addOrder({
-      patientName: currentPatient.name,
-      patientAvatar: currentPatient.avatar,
-      items: cart.map(item => ({
-        name: item.product.name,
-        quantity: item.quantity,
-        price: item.product.price,
-      })),
-      total: cartTotal,
-      status: 'pending',
-      prescription: hasPrescriptionItems,
-      prescriptionVerified: hasPrescriptionItems && prescriptionUploaded,
-      deliveryAddress: 'Andheri West, Mumbai',
-    });
-    
-    console.log('Order added, current orders count:', orders.length);
-    
-    toast.success('Order placed successfully!', {
-      description: 'Your medicines will be delivered in 2-3 hours',
-    });
-    setCart([]);
-    setShowCart(false);
+
+    try {
+      await addOrder({
+        patientName: currentPatient.name,
+        patientAvatar: currentPatient.avatar,
+        items: cart.map(item => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+        })),
+        total: cartTotal,
+        status: 'pending',
+        prescription: hasPrescriptionItems,
+        prescriptionVerified: hasPrescriptionItems && prescriptionUploaded,
+        deliveryAddress: 'Andheri West, Mumbai',
+      });
+
+      console.log('Order created successfully');
+
+      toast.success('Order placed successfully!', {
+        description: 'Your medicines will be delivered in 2-3 hours',
+      });
+      setCart([]);
+      setShowCart(false);
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      toast.error('Failed to place order', {
+        description: 'Please try again',
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -173,6 +173,18 @@ export function MedicalStoreView() {
       default: return <Clock size={14} />;
     }
   };
+
+  // Show loading state
+  if (loading && storeProducts.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary mb-4" />
+          <p className="text-muted-foreground">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -231,7 +243,7 @@ export function MedicalStoreView() {
             className="pl-10"
           />
         </div>
-        <Button 
+        <Button
           variant={prescriptionUploaded ? "default" : "outline"}
           onClick={() => setShowUploadModal(true)}
           className={prescriptionUploaded ? "bg-emerald-600 hover:bg-emerald-700" : ""}
@@ -273,6 +285,41 @@ export function MedicalStoreView() {
         ))}
       </motion.div>
 
+      {/* Prescription Guide - Easy to understand legend */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="bg-gradient-to-r from-blue-50 to-amber-50 dark:from-blue-950/30 dark:to-amber-950/30 rounded-xl p-4 border border-border"
+      >
+        <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+          <AlertTriangle size={16} className="text-amber-600" />
+          Medicine Guide
+        </h3>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {/* No Prescription */}
+          <div className="flex items-center gap-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg p-3 border-2 border-emerald-400">
+            <div className="flex-shrink-0 w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
+              <Shield size={20} className="text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">✅ No Prescription Required</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">You can buy directly</p>
+            </div>
+          </div>
+          {/* Prescription Required */}
+          <div className="flex items-center gap-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg p-3 border-2 border-amber-400">
+            <div className="flex-shrink-0 w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center">
+              <Stethoscope size={20} className="text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-amber-700 dark:text-amber-400 text-sm">⚠️ Prescription Required</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Upload prescription first</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Products Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredProducts.map((product, index) => (
@@ -281,34 +328,56 @@ export function MedicalStoreView() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.03 }}
-            className="bg-card rounded-xl p-4 border border-border shadow-sm hover:shadow-md transition-shadow"
+            className={cn(
+              "bg-card rounded-xl overflow-hidden border-2 shadow-sm hover:shadow-md transition-all",
+              product.prescription
+                ? "border-amber-300 dark:border-amber-600"
+                : "border-emerald-300 dark:border-emerald-600"
+            )}
           >
-            <div className="text-4xl mb-3">{product.image}</div>
-            <div className="flex items-start justify-between mb-2">
-              <div>
+            {/* Prescription indicator banner at top */}
+            {product.prescription ? (
+              <div className="bg-amber-100 dark:bg-amber-900/50 px-3 py-1.5 flex items-center gap-2 border-b border-amber-200 dark:border-amber-700">
+                <Stethoscope size={14} className="text-amber-600" />
+                <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                  ⚠️ Prescription Required
+                </span>
+              </div>
+            ) : (
+              <div className="bg-emerald-100 dark:bg-emerald-900/50 px-3 py-1.5 flex items-center gap-2 border-b border-emerald-200 dark:border-emerald-700">
+                <Shield size={14} className="text-emerald-600" />
+                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                  ✅ No Prescription Needed
+                </span>
+              </div>
+            )}
+
+            <div className="p-4">
+              <div className="text-4xl mb-3">{product.image}</div>
+              <div className="mb-2">
                 <h3 className="font-medium text-sm">{product.name}</h3>
                 <p className="text-xs text-muted-foreground">{product.category}</p>
               </div>
-              {product.prescription && (
-                <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-medium rounded">
-                  Rx
-                </span>
-              )}
-            </div>
-            <div className="flex items-center justify-between mt-3">
-              <p className="font-display font-bold">₹{product.price}</p>
-              {product.inStock ? (
-                <Button
-                  size="sm"
-                  onClick={() => addToCart(product)}
-                  className="h-8"
-                >
-                  <Plus size={14} className="mr-1" />
-                  Add
-                </Button>
-              ) : (
-                <span className="text-xs text-muted-foreground">Out of Stock</span>
-              )}
+              <div className="flex items-center justify-between mt-3">
+                <p className="font-display font-bold text-lg">₹{product.price}</p>
+                {product.inStock ? (
+                  <Button
+                    size="sm"
+                    onClick={() => addToCart(product)}
+                    className={cn(
+                      "h-9",
+                      product.prescription
+                        ? "bg-amber-600 hover:bg-amber-700"
+                        : "bg-emerald-600 hover:bg-emerald-700"
+                    )}
+                  >
+                    <Plus size={14} className="mr-1" />
+                    Add
+                  </Button>
+                ) : (
+                  <span className="text-xs text-red-500 font-medium">Out of Stock</span>
+                )}
+              </div>
             </div>
           </motion.div>
         ))}
@@ -339,67 +408,67 @@ export function MedicalStoreView() {
               className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
             >
               <div className="w-full max-w-md bg-card rounded-2xl p-6 shadow-xl pointer-events-auto mx-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display font-semibold text-lg">Upload Prescription</h2>
-                <button onClick={() => setShowUploadModal(false)} className="p-2 hover:bg-muted rounded-lg">
-                  <X size={20} />
-                </button>
-              </div>
-
-              <p className="text-sm text-muted-foreground mb-6">
-                Upload a valid prescription to order prescription medicines. We accept images and PDF files.
-              </p>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-
-              {!uploadedFile ? (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors"
-                >
-                  <FileText size={40} className="mx-auto text-muted-foreground mb-3" />
-                  <p className="font-medium mb-1">Click to upload</p>
-                  <p className="text-xs text-muted-foreground">JPG, PNG, PDF up to 10MB</p>
-                </button>
-              ) : (
-                <div className="border border-border rounded-xl p-4 flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <FileText size={24} className="text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{uploadedFile.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {(uploadedFile.size / 1024).toFixed(1)} KB
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setUploadedFile(null)}
-                    className="p-2 hover:bg-muted rounded-lg text-muted-foreground"
-                  >
-                    <X size={16} />
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-display font-semibold text-lg">Upload Prescription</h2>
+                  <button onClick={() => setShowUploadModal(false)} className="p-2 hover:bg-muted rounded-lg">
+                    <X size={20} />
                   </button>
                 </div>
-              )}
 
-              <div className="flex gap-3 mt-6">
-                <Button variant="outline" className="flex-1" onClick={() => setShowUploadModal(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  className="flex-1 btn-hero" 
-                  onClick={handleUploadPrescription}
-                  disabled={!uploadedFile}
-                >
-                  <Upload size={16} className="mr-2" />
-                  Upload
-                </Button>
-              </div>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Upload a valid prescription to order prescription medicines. We accept images and PDF files.
+                </p>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
+                {!uploadedFile ? (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors"
+                  >
+                    <FileText size={40} className="mx-auto text-muted-foreground mb-3" />
+                    <p className="font-medium mb-1">Click to upload</p>
+                    <p className="text-xs text-muted-foreground">JPG, PNG, PDF up to 10MB</p>
+                  </button>
+                ) : (
+                  <div className="border border-border rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <FileText size={24} className="text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{uploadedFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(uploadedFile.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setUploadedFile(null)}
+                      className="p-2 hover:bg-muted rounded-lg text-muted-foreground"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex gap-3 mt-6">
+                  <Button variant="outline" className="flex-1" onClick={() => setShowUploadModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 btn-hero"
+                    onClick={handleUploadPrescription}
+                    disabled={!uploadedFile}
+                  >
+                    <Upload size={16} className="mr-2" />
+                    Upload
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </>
@@ -536,7 +605,7 @@ export function MedicalStoreView() {
                           <span className="capitalize">{order.status}</span>
                         </span>
                       </div>
-                      
+
                       <div className="space-y-2 mb-3">
                         {order.items.map((item, i) => (
                           <div key={i} className="flex items-center justify-between text-sm">
@@ -545,7 +614,7 @@ export function MedicalStoreView() {
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="border-t border-border pt-3 mt-3">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium">Total</span>

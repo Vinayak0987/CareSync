@@ -154,9 +154,16 @@ export function OrdersManager() {
     return matchesSearch && matchesStatus;
   });
 
-  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    updateStatus(orderId, newStatus);
-    toast.success(`Order ${orderId} marked as ${newStatus}`);
+  const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
+    try {
+      await updateStatus(orderId, newStatus);
+      toast.success(`Order ${orderId} marked as ${newStatus}`);
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      toast.error('Failed to update order status', {
+        description: 'Please try again',
+      });
+    }
   };
 
   const getStatusColor = (status: OrderStatus) => {

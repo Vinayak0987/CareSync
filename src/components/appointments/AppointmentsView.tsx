@@ -40,7 +40,8 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
     date: Date;
     time: string;
     reason: string;
-  }>>({});
+    status: 'pending' | 'confirmed' | 'waiting' | 'in-progress' | 'completed' | 'cancelled';
+  }>>({});;
 
   useEffect(() => {
     fetchDoctors();
@@ -53,8 +54,14 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
       const appointments = response.data;
 
       // Convert appointments array to bookedAppointments map
+      // Only include active appointments (not completed or cancelled)
       const appointmentsMap: Record<string, any> = {};
       appointments.forEach((appt: any) => {
+        // Skip completed or cancelled appointments - allow rebooking
+        if (appt.status === 'completed' || appt.status === 'cancelled') {
+          return;
+        }
+
         appointmentsMap[appt.doctorId._id || appt.doctorId] = {
           appointmentId: appt._id,
           doctorId: appt.doctorId._id || appt.doctorId,
@@ -64,6 +71,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
           date: new Date(appt.date),
           time: appt.time,
           reason: appt.reason || 'General Consultation',
+          status: appt.status || 'pending',
         };
       });
 
@@ -72,6 +80,14 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
       console.error('Failed to fetch appointments', error);
     }
   };
+
+  // Auto-refresh appointments every 10 seconds to catch status updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUserAppointments();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchDoctors = async () => {
     try {
@@ -254,12 +270,19 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                   {bookedAppointments[doctor._id] ? (
                     // Show booked status and action buttons
                     <div className="w-full space-y-3">
-                      {/* Booked Badge */}
+                      {/* Status Badge */}
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/10 text-success text-sm font-semibold rounded-full">
-                          <Check size={16} />
-                          Booked
-                        </span>
+                        {bookedAppointments[doctor._id].status === 'in-progress' ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-sm font-semibold rounded-full">
+                            <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                            In Progress
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/10 text-success text-sm font-semibold rounded-full">
+                            <Check size={16} />
+                            {bookedAppointments[doctor._id].status === 'confirmed' ? 'Confirmed' : 'Booked'}
+                          </span>
+                        )}
                         <div className="text-xs text-muted-foreground">
                           {bookedAppointments[doctor._id].date.toLocaleDateString('en', { month: 'short', day: 'numeric' })} • {bookedAppointments[doctor._id].time}
                         </div>
@@ -278,7 +301,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                             endTime.setHours(endTime.getHours() + 1);
 
                             const formatGoogleCalendarDate = (date: Date) => {
-                              return date.toISOString().replace(/-|:|\.\d+/g, '');
+                              return date.toISOString().replace(/-|:|\\.\\d+/g, '');
                             };
 
                             const title = encodeURIComponent(`Appointment with Dr. ${appt.doctorName}`);
@@ -329,6 +352,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                           Cancel
                         </Button>
                       </div>
+
                     </div>
                   ) : (
                     // Show available and book button

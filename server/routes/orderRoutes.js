@@ -1,54 +1,43 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
+const { protect, optionalProtect } = require('../middleware/authMiddleware');
+const {
+  getOrders,
+  getPatientOrders,
+  getOrderById,
+  createOrder,
+  updateOrderStatus,
+  deleteOrder
+} = require('../controllers/orderController');
 
-// @desc    Get user orders
+// @desc    Get all orders (for pharmacy dashboard)
 // @route   GET /api/orders
-// @access  Private
-router.get('/', protect, async (req, res) => {
-  try {
-    // Return mock orders for now
-    const orders = [];
-    res.json(orders);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch orders' });
-  }
-});
+// @access  Private (optional for demo)
+router.get('/', optionalProtect, getOrders);
+
+// @desc    Get orders by patient name
+// @route   GET /api/orders/patient/:patientName
+// @access  Private (optional for demo)
+router.get('/patient/:patientName', optionalProtect, getPatientOrders);
 
 // @desc    Create new order
 // @route   POST /api/orders
-// @access  Private
-router.post('/', protect, async (req, res) => {
-  try {
-    const { items, totalAmount, address } = req.body;
-    
-    // Mock order creation
-    const order = {
-      id: Date.now().toString(),
-      userId: req.user.id,
-      items,
-      totalAmount,
-      address,
-      status: 'pending',
-      createdAt: new Date()
-    };
-    
-    res.status(201).json(order);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create order' });
-  }
-});
+// @access  Private (optional for demo)
+router.post('/', optionalProtect, createOrder);
 
 // @desc    Get order by ID
 // @route   GET /api/orders/:id
-// @access  Private
-router.get('/:id', protect, async (req, res) => {
-  try {
-    // Return mock order
-    res.json({ id: req.params.id, status: 'processing' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch order' });
-  }
-});
+// @access  Private (optional for demo)
+router.get('/:id', optionalProtect, getOrderById);
+
+// @desc    Update order status
+// @route   PUT /api/orders/:id/status
+// @access  Private (optional for demo)
+router.put('/:id/status', optionalProtect, updateOrderStatus);
+
+// @desc    Delete order
+// @route   DELETE /api/orders/:id
+// @access  Private (optional for demo)
+router.delete('/:id', optionalProtect, deleteOrder);
 
 module.exports = router;
