@@ -21,7 +21,11 @@ interface Appointment {
   status: 'pending' | 'completed' | 'cancelled';
 }
 
-export function DoctorAppointments() {
+interface DoctorAppointmentsProps {
+  onNavigateToPatient?: (patientId: string) => void;
+}
+
+export function DoctorAppointments({ onNavigateToPatient }: DoctorAppointmentsProps) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed' | 'cancelled'>('all');
@@ -53,7 +57,7 @@ export function DoctorAppointments() {
     }
   };
 
-  const filteredAppointments = appointments.filter(apt => 
+  const filteredAppointments = appointments.filter(apt =>
     filter === 'all' ? true : apt.status === filter
   );
 
@@ -186,7 +190,8 @@ export function DoctorAppointments() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-card rounded-xl p-5 border border-border shadow-sm hover:shadow-md transition-shadow"
+                    onClick={() => onNavigateToPatient && onNavigateToPatient(apt.patientId._id)}
+                    className="bg-card rounded-xl p-5 border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       {/* Patient Info */}
@@ -230,7 +235,10 @@ export function DoctorAppointments() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => updateStatus(apt._id, 'completed')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateStatus(apt._id, 'completed');
+                            }}
                             className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
                           >
                             <CheckCircle size={16} className="mr-1" />
@@ -239,7 +247,10 @@ export function DoctorAppointments() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => updateStatus(apt._id, 'cancelled')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateStatus(apt._id, 'cancelled');
+                            }}
                             className="text-red-600 border-red-200 hover:bg-red-50"
                           >
                             <XCircle size={16} className="mr-1" />

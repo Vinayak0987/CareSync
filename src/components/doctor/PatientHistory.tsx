@@ -61,10 +61,15 @@ const mockVitalsHistory = [
   { date: 'Sun', systolic: 120, diastolic: 80, heartRate: 72 },
 ];
 
-export function PatientHistory() {
+interface PatientHistoryProps {
+  initialPatientId?: string;
+}
+
+export function PatientHistory({ initialPatientId }: PatientHistoryProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<PatientDetails | null>(null);
+  const [patientPrescriptions, setPatientPrescriptions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,8 +82,10 @@ export function PatientHistory() {
       try {
         const response = await api.get('/doctors/my-patients');
         setPatients(response.data);
-        // Auto-select first patient if available
-        if (response.data.length > 0) {
+        // Auto-select patient if initialPatientId is provided, otherwise first valid patient
+        if (initialPatientId) {
+          fetchPatientDetails(initialPatientId);
+        } else if (response.data.length > 0) {
           fetchPatientDetails(response.data[0].id);
         }
       } catch (err: any) {
@@ -98,6 +105,9 @@ export function PatientHistory() {
     try {
       const response = await api.get(`/doctors/patient/${patientId}`);
       setSelectedPatient(response.data);
+
+      const presRes = await api.get(`/prescriptions/patient/${patientId}`);
+      setPatientPrescriptions(presRes.data);
     } catch (err: any) {
       console.error('Error fetching patient details:', err);
     } finally {
@@ -314,6 +324,42 @@ export function PatientHistory() {
                       {apt.notes && (
                         <p className="text-sm text-muted-foreground italic">"{apt.notes}"</p>
                       )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Prescription History */}
+            <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText size={18} className="text-primary" />
+                <h3 className="font-display font-semibold">Prescription History</h3>
+              </div>
+              <div className="space-y-4">
+                {patientPrescriptions.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-4">
+                    <FileText size={32} className="mx-auto mb-2 text-muted-foreground/50" />
+                    <p>No prescription history</p>
+                  </div>
+                ) : (
+                  patientPrescriptions.map((rx) => (
+                    <div key={rx._id} className="p-4 bg-muted/50 rounded-xl">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-medium text-primary">{new Date(rx.createdAt).toLocaleDateString()}</span>
+                        <span className="text-xs text-muted-foreground">Dr. {rx.doctorId?.name || 'Doctor'}</span>
+                      </div>
+                      <p className="font-medium text-sm mb-2">Dx: {rx.diagnosis}</p>
+                      <div className="text-sm text-muted-foreground">
+                        <p className="text-xs font-semibold uppercase mb-1">Medicines:</p>
+                        <ul className="list-disc list-inside space-y-1 ml-1">
+                          {rx.medicines.map((med: any, idx: number) => (
+                            <li key={idx}>
+                              {med.name} - {med.dosage} ({med.frequency} x {med.duration})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   ))
                 )}

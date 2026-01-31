@@ -21,6 +21,7 @@ interface Appointment {
 
 export function RecordsView({ onNavigate }: RecordsViewProps) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [vitalsCount, setVitalsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -37,6 +38,15 @@ export function RecordsView({ onNavigate }: RecordsViewProps) {
       // Fetch vitals to get count
       const vitalsRes = await api.get('/vitals');
       setVitalsCount(vitalsRes.data.length);
+
+      // Get user from local storage
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+
+      if (user) {
+        const presRes = await api.get(`/prescriptions/patient/${user._id}`);
+        setPrescriptions(presRes.data);
+      }
     } catch (error) {
       console.error('Failed to fetch records', error);
       toast.error('Failed to load medical records');
@@ -171,16 +181,66 @@ export function RecordsView({ onNavigate }: RecordsViewProps) {
         )}
       </div>
 
-      {/* Prescriptions - Placeholder for future implementation */}
+      {/* Prescriptions */}
       <div>
         <h2 className="font-display font-semibold text-lg mb-4">Prescriptions</h2>
-        <div className="vitals-card text-center py-12">
-          <FileText className="w-16 h-16 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-muted-foreground">No prescriptions yet</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Prescriptions from your doctor consultations will appear here
-          </p>
-        </div>
+        {prescriptions.length === 0 ? (
+          <div className="vitals-card text-center py-12">
+            <FileText className="w-16 h-16 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-muted-foreground">No prescriptions yet</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Prescriptions from your doctor consultations will appear here
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {prescriptions.map((rx) => (
+              <motion.div
+                key={rx._id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="vitals-card p-4 space-y-3"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-medium">Dr. {rx.doctorId?.name || 'Doctor'}</h3>
+                    <p className="text-xs text-muted-foreground">{new Date(rx.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => downloadPrescription(rx._id)}>
+                    <Download size={14} className="mr-1" />
+                    PDF
+                  </Button>
+                </div>
+
+                <div className="bg-muted/50 p-2 rounded-lg">
+                  <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Diagnosis</p>
+                  <p className="text-sm font-medium">{rx.diagnosis}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Medicines</p>
+                  <ul className="space-y-1">
+                    {rx.medicines.map((med: any, idx: number) => (
+                      <li key={idx} className="text-sm flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <span className="font-medium">{med.name}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {med.dosage} - {med.frequency} ({med.duration})
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {rx.notes && (
+                  <div className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-900/10 p-2 rounded border border-amber-100 dark:border-amber-900/20">
+                    Note: {rx.notes}
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Empty State */}

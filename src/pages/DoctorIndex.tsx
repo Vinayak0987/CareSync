@@ -35,6 +35,7 @@ interface DoctorIndexProps {
 const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentAppointment, setCurrentAppointment] = useState<DoctorAppointment | null>(null);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>(undefined);
 
   const handleStartConsultation = (appointment: DoctorAppointment) => {
     setCurrentAppointment(appointment);
@@ -44,6 +45,11 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
   const handleEndCall = () => {
     setCurrentAppointment(null);
     setActiveTab('dashboard');
+  };
+
+  const handleNavigateToPatient = (patientId: string) => {
+    setSelectedPatientId(patientId);
+    setActiveTab('patients');
   };
 
   const renderContent = () => {
@@ -56,7 +62,7 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
           />
         );
       case 'appointments':
-        return <DoctorAppointments />;
+        return <DoctorAppointments onNavigateToPatient={handleNavigateToPatient} />;
       case 'consultation':
         if (currentAppointment) {
           return (
@@ -72,7 +78,7 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
           </div>
         );
       case 'patients':
-        return <PatientHistory />;
+        return <PatientHistory initialPatientId={selectedPatientId} />;
       case 'community':
         return <DoctorCommunity />;
       case 'settings':
@@ -96,7 +102,7 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
           {renderContent()}
         </div>
       </main>
-      
+
       {/* Floating Language Switcher - Bottom Right */}
       <FloatingLanguageSwitcher />
     </div>

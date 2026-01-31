@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { PrescriptionPad } from './PrescriptionPad';
 import { socketService } from '@/lib/socket';
 import { toast } from 'sonner';
+import api from '@/lib/api';
 
 // Type definition for appointment data - matches API response
 interface DoctorAppointment {
@@ -58,16 +59,19 @@ interface DoctorConsultationProps {
 export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultationProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState<'vitals' | 'history' | 'prescription'>('vitals');
   const [callDuration, setCallDuration] = useState(0);
+  const [prescriptionHistory, setPrescriptionHistory] = useState<any[]>([]);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // WebRTC Refs
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const processRef = useRef(true);
 
   // Get doctor info from localStorage
   const userStr = localStorage.getItem('user');
@@ -99,6 +103,8 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
   useEffect(() => {
     if (!appointment.id || !doctor) return;
 
+    processRef.current = true;
+
     // Connect socket
     socketService.connect();
 
@@ -109,6 +115,12 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
     const startWebRTC = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        // Check if effect is still active
+        if (!processRef.current) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
 
         // Show local video
         if (localVideoRef.current) {
@@ -149,6 +161,8 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
         // Listen for incoming call (Offer)
         socketService.onCallMade(async ({ offer }) => {
           try {
+            if ((peerConnection.signalingState as string) === 'closed') return;
+
             if (peerConnection.signalingState !== 'stable') {
               await Promise.all([
                 peerConnection.setLocalDescription({ type: "rollback" }),
@@ -168,6 +182,8 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
         // Listen for Answer
         socketService.onAnswerMade(async ({ answer }) => {
           try {
+            if ((peerConnection.signalingState as string) === 'closed') return;
+
             // Only set remote description if we're expecting an answer
             if (peerConnection.signalingState === "have-local-offer") {
               await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
@@ -180,6 +196,7 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
         // Listen for ICE Candidates
         socketService.onIceCandidateReceived(async ({ candidate }) => {
           try {
+            if ((peerConnection.signalingState as string) === 'closed') return;
             await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
           } catch (e) {
             console.error("Error adding ice candidate:", e);
@@ -187,12 +204,13 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
         });
 
         // Auto-initiate call from Doctor side too?
-        // To avoid collision if both auto-start, we rely on imperfect "glare" handling via rollback
-        // Or we just let both try and see.
-        // For robustness in this demo, having both try to call ensures connection even if one page reloads.
         setTimeout(async () => {
+          if (!processRef.current) return;
+          if ((peerConnection.signalingState as string) === 'closed') return;
+
           try {
             const offer = await peerConnection.createOffer();
+            if ((peerConnection.signalingState as string) === 'closed') return;
             await peerConnection.setLocalDescription(offer);
             socketService.callUser(appointment.id, offer);
           } catch (e) {
@@ -200,9 +218,24 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
           }
         }, 1500);
 
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error accessing media devices.", err);
-        toast.error("Could not access camera/microphone");
+        setPermissionDenied(true);
+
+        if (!navigator.mediaDevices) {
+          toast.error("Media devices API not supported. Are you using HTTPS/localhost?");
+          return;
+        }
+
+        if (err.name === 'NotAllowedError') {
+          toast.error(`Permission denied: ${err.message}. Check OS/Browser settings.`);
+        } else if (err.name === 'NotFoundError') {
+          toast.error("No camera or microphone found.");
+        } else if (err.name === 'NotReadableError') {
+          toast.error("Camera/Mic is in use by another app.");
+        } else {
+          toast.error(`Media Error: ${err.message || err.name}`);
+        }
       }
     };
 
@@ -220,6 +253,8 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
 
     // Cleanup
     return () => {
+      processRef.current = false;
+
       if (localVideoRef.current && localVideoRef.current.srcObject) {
         const stream = localVideoRef.current.srcObject as MediaStream;
         stream.getTracks().forEach(track => track.stop());
@@ -256,10 +291,36 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
     setNewMessage('');
   };
 
-  const handleIssuePrescription = (prescription: { diagnosis: string; medicines: any[]; advice: string }) => {
-    console.log('Prescription issued:', prescription);
-    // In a real app, this would save to the database
+  const handleIssuePrescription = async (prescription: { diagnosis: string; medicines: any[]; advice: string }) => {
+    try {
+      const payload = {
+        patientId: appointment.patientId,
+        appointmentId: appointment.id,
+        ...prescription
+      };
+      await api.post('/prescriptions', payload);
+      toast.success('Prescription issued successfully!');
+      setActiveTab('history');
+    } catch (err) {
+      console.error('Error issuing prescription:', err);
+      toast.error('Failed to issue prescription');
+    }
   };
+
+  // Fetch history when tab is 'history'
+  useEffect(() => {
+    if (activeTab === 'history' && appointment.patientId) {
+      const fetchHistory = async () => {
+        try {
+          const res = await api.get(`/prescriptions/patient/${appointment.patientId}`);
+          setPrescriptionHistory(res.data);
+        } catch (err) {
+          console.error('Error fetching history:', err);
+        }
+      };
+      fetchHistory();
+    }
+  }, [activeTab, appointment.patientId]);
 
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col lg:flex-row gap-4">
@@ -297,7 +358,18 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
 
           {/* Doctor Video (PiP) */}
           <div className="absolute bottom-4 right-4 w-32 h-24 rounded-lg overflow-hidden border-2 border-white/20 bg-gray-800 z-10">
-            {isVideoOff ? (
+            {permissionDenied ? (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-white/50 p-2 text-center">
+                <VideoOff size={20} className="mb-1" />
+                <span className="text-[10px] leading-tight mb-1">Camera denied</span>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-[10px] bg-white/10 text-white px-2 py-0.5 rounded hover:bg-white/20"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : isVideoOff ? (
               <div className="w-full h-full flex items-center justify-center bg-gray-800">
                 <User size={32} className="text-white/50" />
               </div>
@@ -528,10 +600,31 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
                 <FileText size={14} className="text-primary" />
                 Past Prescriptions
               </h4>
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText size={32} className="mx-auto mb-2 opacity-30" />
-                <p>No prescription history</p>
-              </div>
+              {prescriptionHistory.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText size={32} className="mx-auto mb-2 opacity-30" />
+                  <p>No prescription history</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {prescriptionHistory.map((rx) => (
+                    <div key={rx._id} className="p-3 bg-muted/50 rounded-lg text-sm">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-medium text-primary">{new Date(rx.createdAt).toLocaleDateString()}</span>
+                        <span className="text-xs text-muted-foreground">{rx.doctorId?.name || 'Doctor'}</span>
+                      </div>
+                      <p className="font-medium mb-1">Dx: {rx.diagnosis}</p>
+                      <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
+                        {rx.medicines.map((med: any, idx: number) => (
+                          <li key={idx}>
+                            {med.name} - {med.dosage} ({med.frequency} x {med.duration})
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

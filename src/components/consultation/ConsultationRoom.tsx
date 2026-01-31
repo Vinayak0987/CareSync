@@ -31,6 +31,7 @@ interface ConsultationRoomProps {
 export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId, doctorInfo: propsDoctorInfo }: ConsultationRoomProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
   const [showChat, setShowChat] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -41,6 +42,7 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const processRef = useRef(true);
 
   // Get user info from localStorage
   const userStr = localStorage.getItem('user');
@@ -77,6 +79,8 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
   }
 
   useEffect(() => {
+    processRef.current = true;
+
     // Connect socket
     const socket = socketService.connect();
 
@@ -87,6 +91,11 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
     const startWebRTC = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        if (!processRef.current) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
 
         // Show local video
         if (localVideoRef.current) {
@@ -128,6 +137,8 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
         // Listen for incoming call (Offer)
         socketService.onCallMade(async ({ offer }) => {
           try {
+            if ((peerConnection.signalingState as string) === 'closed') return;
+
             if (peerConnection.signalingState !== 'stable') {
               // Determine if we need to rollback to accept new offer or just ignore
               // Simple handling:
@@ -150,6 +161,7 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
         // Listen for Answer
         socketService.onAnswerMade(async ({ answer }) => {
           try {
+            if ((peerConnection.signalingState as string) === 'closed') return;
             if (peerConnection.signalingState === 'have-local-offer') {
               await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
             }
@@ -161,6 +173,7 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
         // Listen for ICE Candidates
         socketService.onIceCandidateReceived(async ({ candidate }) => {
           try {
+            if ((peerConnection.signalingState as string) === 'closed') return;
             await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
           } catch (e) {
             console.error("Error adding ice candidate:", e);
@@ -170,8 +183,12 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
         // Auto-call (patient calls doctor)
         // Wait briefly for socket to maximize connect chance
         setTimeout(async () => {
+          if (!processRef.current) return;
+          if ((peerConnection.signalingState as string) === 'closed') return;
+
           try {
             const offer = await peerConnection.createOffer();
+            if ((peerConnection.signalingState as string) === 'closed') return;
             await peerConnection.setLocalDescription(offer);
             socketService.callUser(appointmentId, offer);
           } catch (e) {
@@ -179,9 +196,26 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
           }
         }, 1000);
 
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error accessing media devices.", err);
-        toast.error("Could not access camera/microphone");
+        setPermissionDenied(true);
+
+        if (!navigator.mediaDevices) {
+          toast.error("Media devices API not supported. Check HTTPS/Localhost.");
+          return;
+        }
+
+        if (err.name === 'NotAllowedError' || err.message.includes('Permission denied')) {
+          toast.error("Access Denied: Please allow camera/mic in BOTH Browser and System Settings.");
+        } else if (err.name === 'NotFoundError') {
+          toast.error("No camera or microphone found. Please connect a device.");
+        } else if (err.name === 'NotReadableError') {
+          toast.error("Camera/Mic is busy. Close other apps using it.");
+        } else if (err.name === 'SecurityError') {
+          toast.error("Security Error: Ensure you are using HTTPS or localhost.");
+        } else {
+          toast.error(`Camera Error: ${err.message || "Unknown error"}`);
+        }
       }
     };
 
@@ -199,6 +233,7 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
 
     // Cleanup
     return () => {
+      processRef.current = false;
       // Stop all tracks
       if (localVideoRef.current && localVideoRef.current.srcObject) {
         const stream = localVideoRef.current.srcObject as MediaStream;
@@ -326,7 +361,39 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
 
           {/* Local Video (Self view PiP) */}
           <div className="absolute bottom-4 right-4 w-32 h-24 sm:w-40 sm:h-28 bg-foreground/10 rounded-xl overflow-hidden border-2 border-background shadow-lg z-10">
-            {isVideoOff ? (
+            {permissionDenied ? (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground p-4 text-center">
+                <VideoOff size={32} className="mb-2 text-alert" />
+                <span className="font-semibold text-sm mb-1">Camera/Mic Access Denied</span>
+                <p className="text-xs mb-3 max-w-[200px]">
+                  Please enable camera access in your <strong>System Settings</strong> and <strong>Browser Permissions</strong>.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => window.location.reload()}
+                  >
+                    Reload Page
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-7 text-xs bg-primary"
+                    onClick={() => {
+                      setPermissionDenied(false);
+                      // Re-trigger the useEffect dependecy or calling a ref-held function would be better, 
+                      // but specific function calls inside render are tricky. 
+                      // Best is to reload or reset state that triggers effect.
+                      // For now, reload is safest for permission reset.
+                      window.location.reload();
+                    }}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            ) : isVideoOff ? (
               <div className="w-full h-full flex items-center justify-center bg-muted">
                 <User size={32} className="text-muted-foreground" />
               </div>
@@ -336,7 +403,7 @@ export function ConsultationRoom({ onNavigate, appointmentId: propsAppointmentId
                 autoPlay
                 muted
                 playsInline
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transform scale-x-[-1]"
               />
             )}
           </div>
