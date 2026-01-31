@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Heart, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone, 
-  Stethoscope, Users, Pill, Globe, Calendar, Droplet, CheckCircle, Shield
+import {
+  Heart, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone,
+  Stethoscope, Users, Pill, Globe, Calendar, Droplet, CheckCircle, Shield,
+  FileText, Upload
 } from 'lucide-react';
 import {
   Select,
@@ -968,7 +969,7 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
 
                   <div className="space-y-2">
                     <Label>Chronic Diseases</Label>
-                    <Select 
+                    <Select
                       onValueChange={(value) => updateSignupData('chronicDiseases', value)}
                       value={signupData.chronicDiseases}
                     >
@@ -999,36 +1000,36 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                             setUploadingReport(true);
                             const formData = new FormData();
                             formData.append('report', file);
-                            
-                             try {
-                                toast.info("Uploading and processing report...");
-                                const res = await api.post('/reports/upload', formData, {
-                                  headers: { 'Content-Type': 'multipart/form-data' }
-                                });
-                                
-                                updateSignupData('medicalReport', res.data.txtFilePath);
-                                toast.success("Report processed! Vital data extracted.");
-                                console.log("Extracted Text:", res.data.text);
-                             } catch (error) {
-                                console.error(error);
-                                toast.error("Failed to process report");
-                             } finally {
-                                setUploadingReport(false);
-                             }
+
+                            try {
+                              toast.info("Uploading and processing report...");
+                              const res = await api.post('/reports/upload', formData, {
+                                headers: { 'Content-Type': 'multipart/form-data' }
+                              });
+
+                              updateSignupData('medicalReport', res.data.txtFilePath);
+                              toast.success("Report processed! Vital data extracted.");
+                              console.log("Extracted Text:", res.data.text);
+                            } catch (error) {
+                              console.error(error);
+                              toast.error("Failed to process report");
+                            } finally {
+                              setUploadingReport(false);
+                            }
                           }
                         }}
                       />
                       <label htmlFor="medical-report" className="cursor-pointer flex flex-col items-center gap-2">
                         {uploadingReport ? (
                           <div className="flex flex-col items-center gap-2">
-                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                             <span className="text-xs text-muted-foreground">Extracting data...</span>
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                            <span className="text-xs text-muted-foreground">Extracting data...</span>
                           </div>
                         ) : signupData.medicalReport ? (
-                           <div className="flex items-center gap-2 text-primary font-medium">
-                             <FileText size={20} />
-                             <span className="text-sm">Report Uploaded & Analyzed</span>
-                           </div>
+                          <div className="flex items-center gap-2 text-primary font-medium">
+                            <FileText size={20} />
+                            <span className="text-sm">Report Uploaded & Analyzed</span>
+                          </div>
                         ) : (
                           <>
                             <Upload size={24} className="text-muted-foreground" />

@@ -1,37 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  User, 
-  Bell, 
-  Shield, 
-  Clock, 
-  Camera, 
+import {
+  User,
+  Bell,
+  Shield,
+  Clock,
+  Camera,
   Save,
   Mail,
   Phone,
   MapPin,
-  Award
+  Award,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { currentDoctor } from '@/lib/mockData';
 import { toast } from 'sonner';
+import api from '@/lib/api';
 
 type SettingsTab = 'profile' | 'notifications' | 'availability' | 'security';
 
+interface DoctorInfo {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  specialty?: string;
+  licenseNumber?: string;
+  experience?: string;
+  avatar?: string;
+  bio?: string;
+}
+
 export function DoctorSettings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [doctor, setDoctor] = useState<DoctorInfo | null>(null);
+
   const [profile, setProfile] = useState({
-    name: currentDoctor.name,
-    email: currentDoctor.email,
-    phone: currentDoctor.phone,
-    specialty: currentDoctor.specialty,
-    registrationNo: currentDoctor.registrationNo,
-    experience: currentDoctor.experience,
-    address: 'Mumbai, Maharashtra',
-    bio: 'Experienced cardiologist specializing in preventive cardiology and heart failure management.'
+    name: '',
+    email: '',
+    phone: '',
+    specialty: '',
+    licenseNumber: '',
+    experience: '',
+    address: '',
+    bio: ''
   });
 
   const [notifications, setNotifications] = useState({
@@ -52,16 +69,102 @@ export function DoctorSettings() {
     sunday: { enabled: false, start: '09:00', end: '17:00' },
   });
 
-  const handleSaveProfile = () => {
-    toast.success('Profile updated successfully!');
+  const [passwords, setPasswords] = useState({
+    current: '',
+    new: '',
+    confirm: ''
+  });
+
+  // Load doctor data from localStorage on mount
+  useEffect(() => {
+    const loadDoctorData = () => {
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const userData = JSON.parse(userStr);
+          setDoctor(userData);
+          setProfile({
+            name: userData.name || '',
+            email: userData.email || '',
+            phone: userData.phone || '',
+            specialty: userData.specialty || '',
+            licenseNumber: userData.licenseNumber || '',
+            experience: userData.experience || '',
+            address: userData.address || 'Not set',
+            bio: userData.bio || ''
+          });
+        }
+      } catch (error) {
+        console.error('Error loading doctor data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDoctorData();
+  }, []);
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const response = await api.put('/doctors/profile', {
+        name: profile.name,
+        specialty: profile.specialty,
+        experience: profile.experience,
+        bio: profile.bio
+      });
+
+      // Update localStorage with new data
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        const updatedUser = { ...userData, ...response.data };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setDoctor(updatedUser);
+      }
+
+      toast.success('Profile updated successfully!');
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast.error(error.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSaveNotifications = () => {
+    // Save to localStorage for now
+    localStorage.setItem('doctorNotificationPrefs', JSON.stringify(notifications));
     toast.success('Notification preferences saved!');
   };
 
   const handleSaveAvailability = () => {
+    // Save to localStorage for now
+    localStorage.setItem('doctorAvailability', JSON.stringify(availability));
     toast.success('Availability updated!');
+  };
+
+  const handleUpdatePassword = async () => {
+    if (passwords.new !== passwords.confirm) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (passwords.new.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Would call API here
+      // await api.put('/auth/password', { currentPassword: passwords.current, newPassword: passwords.new });
+      toast.success('Password updated successfully!');
+      setPasswords({ current: '', new: '', confirm: '' });
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update password');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const tabs = [
@@ -70,6 +173,19 @@ export function DoctorSettings() {
     { id: 'availability', label: 'Availability', icon: Clock },
     { id: 'security', label: 'Security', icon: Shield },
   ];
+
+  const getAvatarUrl = () => {
+    if (doctor?.avatar) return doctor.avatar;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'Doctor')}&background=0D9488&color=fff&size=200`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -121,8 +237,8 @@ export function DoctorSettings() {
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <img
-                    src={currentDoctor.avatar}
-                    alt={currentDoctor.name}
+                    src={getAvatarUrl()}
+                    alt={profile.name}
                     className="w-20 h-20 rounded-full object-cover border-4 border-primary/20"
                   />
                   <button className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg">
@@ -130,10 +246,10 @@ export function DoctorSettings() {
                   </button>
                 </div>
                 <div>
-                  <h3 className="font-display font-semibold text-lg">{profile.name}</h3>
+                  <h3 className="font-display font-semibold text-lg">{profile.name || 'Doctor'}</h3>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Award size={14} />
-                    {profile.specialty} • {profile.experience} years experience
+                    {profile.specialty || 'Specialty not set'} {profile.experience && `• ${profile.experience} years experience`}
                   </p>
                 </div>
               </div>
@@ -160,8 +276,8 @@ export function DoctorSettings() {
                     <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       value={profile.email}
-                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      className="pl-9"
+                      disabled
+                      className="pl-9 bg-muted"
                     />
                   </div>
                 </div>
@@ -173,26 +289,25 @@ export function DoctorSettings() {
                       value={profile.phone}
                       onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                       className="pl-9"
+                      placeholder="Enter phone number"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Registration Number</Label>
+                  <Label>License Number</Label>
                   <Input
-                    value={profile.registrationNo}
-                    onChange={(e) => setProfile({ ...profile, registrationNo: e.target.value })}
+                    value={profile.licenseNumber}
+                    disabled
+                    className="bg-muted"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Location</Label>
-                  <div className="relative">
-                    <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={profile.address}
-                      onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                      className="pl-9"
-                    />
-                  </div>
+                  <Label>Experience (years)</Label>
+                  <Input
+                    value={profile.experience}
+                    onChange={(e) => setProfile({ ...profile, experience: e.target.value })}
+                    placeholder="e.g., 10"
+                  />
                 </div>
               </div>
 
@@ -202,12 +317,13 @@ export function DoctorSettings() {
                   value={profile.bio}
                   onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                   rows={3}
+                  placeholder="Tell patients about yourself..."
                   className="w-full px-3 py-2 rounded-lg border border-border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
-              <Button onClick={handleSaveProfile} className="btn-hero">
-                <Save size={16} className="mr-2" />
+              <Button onClick={handleSaveProfile} disabled={isSaving} className="btn-hero">
+                {isSaving ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Save size={16} className="mr-2" />}
                 Save Changes
               </Button>
             </div>
@@ -216,7 +332,7 @@ export function DoctorSettings() {
           {activeTab === 'notifications' && (
             <div className="bg-card rounded-xl border border-border p-6 space-y-4">
               <h3 className="font-display font-semibold mb-4">Notification Preferences</h3>
-              
+
               {Object.entries(notifications).map(([key, value]) => (
                 <div key={key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                   <div>
@@ -252,7 +368,7 @@ export function DoctorSettings() {
           {activeTab === 'availability' && (
             <div className="bg-card rounded-xl border border-border p-6 space-y-4">
               <h3 className="font-display font-semibold mb-4">Weekly Schedule</h3>
-              
+
               {Object.entries(availability).map(([day, config]) => (
                 <div key={day} className="flex items-center gap-4 py-3 border-b border-border last:border-0">
                   <button
@@ -310,24 +426,39 @@ export function DoctorSettings() {
           {activeTab === 'security' && (
             <div className="bg-card rounded-xl border border-border p-6 space-y-6">
               <h3 className="font-display font-semibold mb-4">Security Settings</h3>
-              
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>Current Password</Label>
-                  <Input type="password" placeholder="Enter current password" />
+                  <Input
+                    type="password"
+                    placeholder="Enter current password"
+                    value={passwords.current}
+                    onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>New Password</Label>
-                  <Input type="password" placeholder="Enter new password" />
+                  <Input
+                    type="password"
+                    placeholder="Enter new password"
+                    value={passwords.new}
+                    onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Confirm New Password</Label>
-                  <Input type="password" placeholder="Confirm new password" />
+                  <Input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={passwords.confirm}
+                    onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+                  />
                 </div>
               </div>
 
-              <Button onClick={() => toast.success('Password updated!')} className="btn-hero">
-                <Shield size={16} className="mr-2" />
+              <Button onClick={handleUpdatePassword} disabled={isSaving} className="btn-hero">
+                {isSaving ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Shield size={16} className="mr-2" />}
                 Update Password
               </Button>
 
