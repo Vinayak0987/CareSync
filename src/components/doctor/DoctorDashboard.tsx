@@ -352,7 +352,7 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
               <p className="text-xs text-muted-foreground">{t('completed' as any)}</p>
             </div>
             <div>
-              <p className="text-2xl font-display font-bold text-sky-600">4.9</p>
+              <p className="text-2xl font-display font-bold text-sky-600">0</p>
               <p className="text-xs text-muted-foreground">{t('avgRating' as any)}</p>
             </div>
           </div>

@@ -1,10 +1,12 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ShoppingCart, Plus, Minus, Upload, X, Check, FileText, Filter } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Upload, X, Check, FileText, Filter, Package, Clock, Truck, CheckCircle, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useOrders } from '@/contexts/OrderContext';
+import { currentPatient } from '@/lib/mockData';
 
 interface Product {
   id: string;
@@ -43,10 +45,14 @@ export function MedicalStoreView() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [showOrders, setShowOrders] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [prescriptionUploaded, setPrescriptionUploaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { orders, addOrder, getPatientOrders } = useOrders();
+  const patientOrders = getPatientOrders(currentPatient.name);
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -117,11 +123,55 @@ export function MedicalStoreView() {
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const checkout = () => {
+    // Create order using the shared context
+    const hasPrescriptionItems = cart.some(item => item.product.prescription);
+    
+    console.log('Checkout called with cart:', cart);
+    console.log('Creating order for:', currentPatient.name);
+    
+    addOrder({
+      patientName: currentPatient.name,
+      patientAvatar: currentPatient.avatar,
+      items: cart.map(item => ({
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price,
+      })),
+      total: cartTotal,
+      status: 'pending',
+      prescription: hasPrescriptionItems,
+      prescriptionVerified: hasPrescriptionItems && prescriptionUploaded,
+      deliveryAddress: 'Andheri West, Mumbai',
+    });
+    
+    console.log('Order added, current orders count:', orders.length);
+    
     toast.success('Order placed successfully!', {
       description: 'Your medicines will be delivered in 2-3 hours',
     });
     setCart([]);
     setShowCart(false);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'processing': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'dispatched': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'delivered': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'cancelled': return 'bg-red-100 text-red-700 border-red-200';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending': return <Clock size={14} />;
+      case 'processing': return <Package size={14} />;
+      case 'dispatched': return <Truck size={14} />;
+      case 'delivered': return <CheckCircle size={14} />;
+      default: return <Clock size={14} />;
+    }
   };
 
   return (
@@ -136,19 +186,34 @@ export function MedicalStoreView() {
           <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">Medical Store</h1>
           <p className="text-muted-foreground">Order medicines and healthcare products</p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setShowCart(true)}
-          className="relative self-start"
-        >
-          <ShoppingCart size={18} className="mr-2" />
-          Cart
-          {cartCount > 0 && (
-            <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
-              {cartCount}
-            </span>
-          )}
-        </Button>
+        <div className="flex gap-2 self-start">
+          <Button
+            variant="outline"
+            onClick={() => setShowOrders(true)}
+            className="relative"
+          >
+            <Package size={18} className="mr-2" />
+            Orders
+            {patientOrders.length > 0 && (
+              <span className="absolute -top-2 -right-2 w-5 h-5 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center">
+                {patientOrders.length}
+              </span>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowCart(true)}
+            className="relative"
+          >
+            <ShoppingCart size={18} className="mr-2" />
+            Cart
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </Button>
+        </div>
       </motion.div>
 
       {/* Search & Upload */}
@@ -271,8 +336,9 @@ export function MedicalStoreView() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card rounded-2xl p-6 shadow-xl z-50"
+              className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
             >
+              <div className="w-full max-w-md bg-card rounded-2xl p-6 shadow-xl pointer-events-auto mx-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display font-semibold text-lg">Upload Prescription</h2>
                 <button onClick={() => setShowUploadModal(false)} className="p-2 hover:bg-muted rounded-lg">
@@ -333,6 +399,7 @@ export function MedicalStoreView() {
                   <Upload size={16} className="mr-2" />
                   Upload
                 </Button>
+              </div>
               </div>
             </motion.div>
           </>
@@ -415,6 +482,87 @@ export function MedicalStoreView() {
                   </Button>
                 </div>
               )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Orders Drawer */}
+      <AnimatePresence>
+        {showOrders && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-foreground/30 backdrop-blur-sm z-50"
+              onClick={() => setShowOrders(false)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-card border-l border-border z-50 flex flex-col"
+            >
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <h2 className="font-display font-semibold text-lg">My Orders</h2>
+                <button onClick={() => setShowOrders(false)} className="p-2 hover:bg-muted rounded-lg">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {patientOrders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Package size={48} className="mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No orders yet</p>
+                    <p className="text-sm text-muted-foreground mt-1">Place your first order from the store!</p>
+                  </div>
+                ) : (
+                  patientOrders.map((order) => (
+                    <motion.div
+                      key={order.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-muted/50 rounded-xl p-4 border border-border"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs text-muted-foreground font-mono">{order.id}</span>
+                        <span className={cn(
+                          "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border",
+                          getStatusColor(order.status)
+                        )}>
+                          {getStatusIcon(order.status)}
+                          <span className="capitalize">{order.status}</span>
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2 mb-3">
+                        {order.items.map((item, i) => (
+                          <div key={i} className="flex items-center justify-between text-sm">
+                            <span>{item.name} × {item.quantity}</span>
+                            <span className="text-muted-foreground">₹{item.price * item.quantity}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="border-t border-border pt-3 mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium">Total</span>
+                          <span className="font-display font-bold">₹{order.total}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <MapPin size={12} />
+                          {order.deliveryAddress}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Ordered: {order.orderDate}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
             </motion.div>
           </>
         )}

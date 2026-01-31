@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { type PatientOrder } from '@/lib/mockData';
+import { useOrders } from '@/contexts/OrderContext';
 
 type OrderStatus = PatientOrder['status'];
 
@@ -142,7 +143,7 @@ const initialOrders: PatientOrder[] = [
 ];
 
 export function OrdersManager() {
-  const [orders, setOrders] = useState<PatientOrder[]>(initialOrders);
+  const { orders, updateOrderStatus: updateStatus } = useOrders();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
 
@@ -154,9 +155,7 @@ export function OrdersManager() {
   });
 
   const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    setOrders(orders.map(o =>
-      o.id === orderId ? { ...o, status: newStatus } : o
-    ));
+    updateStatus(orderId, newStatus);
     toast.success(`Order ${orderId} marked as ${newStatus}`);
   };
 
