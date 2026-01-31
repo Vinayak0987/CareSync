@@ -1,13 +1,23 @@
 import { useState } from 'react';
+<<<<<<< HEAD
 import { 
   LayoutDashboard, 
   Video, 
   Users, 
+=======
+import { motion } from 'framer-motion';
+import {
+  LayoutDashboard,
+  Video,
+  Users,
+>>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
   Settings,
   LogOut,
   Menu,
   X,
-  Stethoscope
+  Stethoscope,
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { currentDoctor } from '@/lib/mockData';
@@ -19,6 +29,18 @@ interface DoctorSidebarProps {
   onLogout: () => void;
 }
 
+<<<<<<< HEAD
+=======
+const navItems = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'appointments', label: 'Appointments', icon: Calendar },
+  { id: 'consultation', label: 'Consultation', icon: Video },
+  { id: 'patients', label: 'Patient Records', icon: Users },
+  { id: 'community', label: 'Community', icon: MessageSquare },
+  { id: 'settings', label: 'Settings', icon: Settings },
+];
+
+>>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { t, td } = useLanguage();
@@ -42,7 +64,7 @@ export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSideba
 
       {/* Mobile overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-foreground/30 backdrop-blur-sm z-40"
           onClick={() => setIsMobileOpen(false)}
         />
@@ -93,6 +115,7 @@ export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSideba
         {/* Doctor Profile */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 mb-3">
+<<<<<<< HEAD
             <img
               src={currentDoctor.avatar}
               alt={currentDoctor.name}
@@ -101,6 +124,18 @@ export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSideba
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{currentDoctor.name}</p>
               <p className="text-xs text-muted-foreground truncate">{td(currentDoctor.specialty)}</p>
+=======
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+              {JSON.parse(localStorage.getItem('user') || '{}')?.name?.charAt(0) || 'D'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">
+                {JSON.parse(localStorage.getItem('user') || '{}')?.name || 'Doctor'}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {JSON.parse(localStorage.getItem('user') || '{}')?.specialty || 'General Physician'}
+              </p>
+>>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
             </div>
           </div>
           <button

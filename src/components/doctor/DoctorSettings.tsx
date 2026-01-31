@@ -48,7 +48,12 @@ export function DoctorSettings() {
     licenseNumber: '',
     experience: '',
     address: '',
+<<<<<<< HEAD
     bio: ''
+=======
+    bio: '',
+    avatar: ''
+>>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
   });
 
   const [notifications, setNotifications] = useState({
@@ -91,7 +96,12 @@ export function DoctorSettings() {
             licenseNumber: userData.licenseNumber || '',
             experience: userData.experience || '',
             address: userData.address || 'Not set',
+<<<<<<< HEAD
             bio: userData.bio || ''
+=======
+            bio: userData.bio || '',
+            avatar: userData.avatar || ''
+>>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
           });
         }
       } catch (error) {
@@ -111,7 +121,12 @@ export function DoctorSettings() {
         name: profile.name,
         specialty: profile.specialty,
         experience: profile.experience,
+<<<<<<< HEAD
         bio: profile.bio
+=======
+        bio: profile.bio,
+        avatar: profile.avatar
+>>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
       });
 
       // Update localStorage with new data
@@ -241,12 +256,23 @@ export function DoctorSettings() {
                     alt={profile.name}
                     className="w-20 h-20 rounded-full object-cover border-4 border-primary/20"
                   />
-                  <button className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg">
-                    <Camera size={14} />
-                  </button>
                 </div>
+<<<<<<< HEAD
                 <div>
                   <h3 className="font-display font-semibold text-lg">{profile.name || 'Doctor'}</h3>
+=======
+                <div className="flex-1">
+                  <h3 className="font-display font-semibold text-lg">{profile.name || 'Doctor'}</h3>
+                  <div className="flex items-center gap-2 mt-1 mb-2">
+                    <Label className="text-xs text-muted-foreground w-20 shrink-0">Profile Photo URL</Label>
+                    <Input
+                      value={profile.avatar || ''}
+                      onChange={(e) => setProfile({ ...profile, avatar: e.target.value })}
+                      placeholder="https://example.com/photo.jpg"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+>>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Award size={14} />
                     {profile.specialty || 'Specialty not set'} {profile.experience && `• ${profile.experience} years experience`}

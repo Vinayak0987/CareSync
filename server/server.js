@@ -35,6 +35,7 @@ app.use('/api/vitals', require('./routes/vitalRoutes'));
 app.use('/api/medicines', require('./routes/medicineRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
+<<<<<<< HEAD
 
 // Upload Report Endpoint
 app.post('/api/upload-report', upload.single('report'), async (req, res) => {
@@ -143,6 +144,12 @@ app.post('/api/upload-report', upload.single('report'), async (req, res) => {
     res.status(500).json({ error: 'Internal server error', details: error.toString() });
   }
 });
+=======
+app.use('/api/posts', require('./routes/postRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
+
+app.use(require('./middleware/errorMiddleware').errorHandler);
+>>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 
 const PORT = process.env.PORT || 5000;
 

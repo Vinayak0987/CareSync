@@ -6,6 +6,10 @@ import { DoctorAppointments } from '@/components/doctor/DoctorAppointments';
 import { DoctorConsultation } from '@/components/doctor/DoctorConsultation';
 import { PatientHistory } from '@/components/doctor/PatientHistory';
 import { DoctorSettings } from '@/components/doctor/DoctorSettings';
+<<<<<<< HEAD
+=======
+import { DoctorCommunity } from '@/components/doctor/DoctorCommunity';
+>>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 
 // Type definition for appointment data - matches API response
 interface DoctorAppointment {
@@ -72,6 +76,8 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
         );
       case 'patients':
         return <PatientHistory />;
+      case 'community':
+        return <DoctorCommunity />;
       case 'settings':
         return <DoctorSettings />;
       default:

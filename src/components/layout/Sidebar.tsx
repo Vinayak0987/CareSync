@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Home, 
-  Calendar, 
-  FileText, 
-  Video, 
-  ShoppingBag, 
+import {
+  Home,
+  Calendar,
+  FileText,
+  Video,
+  ShoppingBag,
   Heart,
   BarChart3,
   LogOut,
   Menu,
-  X
+  X,
+  MessageSquare,
+  Gamepad2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { currentPatient } from '@/lib/mockData';
@@ -22,6 +24,20 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
+<<<<<<< HEAD
+=======
+const navItems = [
+  { id: 'home', label: 'Dashboard', icon: Home },
+  { id: 'appointments', label: 'Appointments', icon: Calendar },
+  { id: 'records', label: 'My Records', icon: FileText },
+  { id: 'reports', label: 'Reports', icon: BarChart3 },
+  { id: 'consultation', label: 'Consultation', icon: Video },
+  { id: 'store', label: 'Medical Store', icon: ShoppingBag },
+  { id: 'community', label: 'Community', icon: MessageSquare },
+  { id: 'wellness', label: 'Games & Activity', icon: Gamepad2 },
+];
+
+>>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { t } = useLanguage();
@@ -48,7 +64,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
 
       {/* Mobile overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-foreground/20 backdrop-blur-sm z-40"
           onClick={() => setIsMobileOpen(false)}
         />
@@ -63,7 +79,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b border-sidebar-border">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3"
@@ -110,7 +126,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
                 <p className="font-medium text-sm truncate">{currentPatient.name}</p>
                 <p className="text-xs text-muted-foreground">{t('patient')}</p>
               </div>
-              <button 
+              <button
                 onClick={onLogout}
                 className="p-2 hover:bg-sidebar-accent rounded-lg transition-colors"
                 title={t('logout')}
