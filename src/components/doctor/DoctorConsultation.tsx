@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Mic, 
-  MicOff, 
-  Video, 
-  VideoOff, 
-  PhoneOff, 
+import {
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  PhoneOff,
   Send,
   User,
   Activity,
@@ -13,26 +13,45 @@ import {
   Clock,
   AlertTriangle
 } from 'lucide-react';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { PrescriptionPad } from './PrescriptionPad';
-import { 
-  vitalsHistory, 
-  mockChatMessages, 
+import {
+  vitalsHistory,
+  mockChatMessages,
   prescriptions,
-  type DoctorAppointment,
   type ChatMessage
 } from '@/lib/mockData';
+
+// Type definition for appointment data - matches API response
+interface DoctorAppointment {
+  id: string;
+  patientId: string;
+  patientName: string;
+  patientAvatar: string;
+  patientEmail?: string;
+  patientPhone?: string;
+  age: number | null;
+  gender: string;
+  bloodGroup?: string;
+  allergies?: string;
+  time: string;
+  date?: string;
+  reason: string;
+  status: 'pending' | 'confirmed' | 'waiting' | 'in-progress' | 'completed' | 'cancelled';
+  conditions: string[];
+  notes?: string;
+}
 
 interface DoctorConsultationProps {
   appointment: DoctorAppointment;
@@ -77,14 +96,14 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
 
   const sendMessage = () => {
     if (!newMessage.trim()) return;
-    
+
     const message: ChatMessage = {
       id: Date.now().toString(),
       sender: 'doctor',
       message: newMessage,
       timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
     };
-    
+
     setMessages([...messages, message]);
     setNewMessage('');
   };
@@ -183,7 +202,7 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
           </div>
 
           {/* Messages */}
-          <div 
+          <div
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto p-3 space-y-3"
           >
@@ -250,7 +269,7 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
               </p>
             </div>
           </div>
-          
+
           {/* Conditions */}
           {appointment.conditions.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">

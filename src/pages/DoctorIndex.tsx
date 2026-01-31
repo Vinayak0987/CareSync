@@ -5,7 +5,26 @@ import { DoctorAppointments } from '@/components/doctor/DoctorAppointments';
 import { DoctorConsultation } from '@/components/doctor/DoctorConsultation';
 import { PatientHistory } from '@/components/doctor/PatientHistory';
 import { DoctorSettings } from '@/components/doctor/DoctorSettings';
-import { type DoctorAppointment } from '@/lib/mockData';
+
+// Type definition for appointment data - matches API response
+interface DoctorAppointment {
+  id: string;
+  patientId: string;
+  patientName: string;
+  patientAvatar: string;
+  patientEmail: string;
+  patientPhone: string;
+  age: number | null;
+  gender: string;
+  bloodGroup: string;
+  allergies: string;
+  time: string;
+  date: string;
+  reason: string;
+  status: 'pending' | 'confirmed' | 'waiting' | 'in-progress' | 'completed' | 'cancelled';
+  conditions: string[];
+  notes?: string;
+}
 
 interface DoctorIndexProps {
   onLogout: () => void;
@@ -29,7 +48,7 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <DoctorDashboard 
+          <DoctorDashboard
             onNavigate={setActiveTab}
             onStartConsultation={handleStartConsultation}
           />
@@ -39,7 +58,7 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
       case 'consultation':
         if (currentAppointment) {
           return (
-            <DoctorConsultation 
+            <DoctorConsultation
               appointment={currentAppointment}
               onEndCall={handleEndCall}
             />
@@ -56,7 +75,7 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
         return <DoctorSettings />;
       default:
         return (
-          <DoctorDashboard 
+          <DoctorDashboard
             onNavigate={setActiveTab}
             onStartConsultation={handleStartConsultation}
           />
@@ -67,7 +86,7 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
   return (
     <div className="flex min-h-screen bg-background">
       <DoctorSidebar activeTab={activeTab} onTabChange={setActiveTab} onLogout={onLogout} />
-      
+
       <main className="flex-1 lg:ml-0 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
         <div className="max-w-6xl mx-auto">
           {renderContent()}
