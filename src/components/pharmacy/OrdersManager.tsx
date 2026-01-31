@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
+import {
   Search,
   Clock,
   Package,
@@ -14,9 +14,132 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { patientOrders as initialOrders, type PatientOrder } from '@/lib/mockData';
+import { type PatientOrder } from '@/lib/mockData';
 
 type OrderStatus = PatientOrder['status'];
+
+// Initial orders data
+const initialOrders: PatientOrder[] = [
+  {
+    id: 'ORD-2026-001',
+    patientName: 'Ravi Kumar',
+    patientAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Amlodipine 5mg', quantity: 2, price: 120 },
+      { name: 'Metformin 500mg', quantity: 1, price: 85 },
+    ],
+    total: 325,
+    status: 'pending',
+    prescription: true,
+    prescriptionVerified: true,
+    orderDate: '31 Jan 2026, 10:30 AM',
+    deliveryAddress: 'Andheri West, Mumbai',
+  },
+  {
+    id: 'ORD-2026-002',
+    patientName: 'Priya Sharma',
+    patientAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Vitamin D3 1000IU', quantity: 1, price: 250 },
+      { name: 'Multivitamin Tablets', quantity: 1, price: 320 },
+    ],
+    total: 570,
+    status: 'processing',
+    prescription: false,
+    prescriptionVerified: false,
+    orderDate: '31 Jan 2026, 09:15 AM',
+    deliveryAddress: 'Koregaon Park, Pune',
+  },
+  {
+    id: 'ORD-2026-003',
+    patientName: 'Amit Patel',
+    patientAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Insulin Glargine', quantity: 1, price: 850 },
+      { name: 'Glucose Test Strips', quantity: 2, price: 450 },
+    ],
+    total: 1750,
+    status: 'dispatched',
+    prescription: true,
+    prescriptionVerified: true,
+    orderDate: '30 Jan 2026, 04:45 PM',
+    deliveryAddress: 'Satellite, Ahmedabad',
+  },
+  {
+    id: 'ORD-2026-004',
+    patientName: 'Sneha Reddy',
+    patientAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Paracetamol 500mg', quantity: 3, price: 45 },
+      { name: 'Cetirizine 10mg', quantity: 1, price: 35 },
+    ],
+    total: 170,
+    status: 'delivered',
+    prescription: false,
+    prescriptionVerified: false,
+    orderDate: '29 Jan 2026, 11:00 AM',
+    deliveryAddress: 'Banjara Hills, Hyderabad',
+  },
+  {
+    id: 'ORD-2026-005',
+    patientName: 'Vikram Singh',
+    patientAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Blood Pressure Monitor', quantity: 1, price: 1299 },
+    ],
+    total: 1299,
+    status: 'pending',
+    prescription: false,
+    prescriptionVerified: false,
+    orderDate: '31 Jan 2026, 11:20 AM',
+    deliveryAddress: 'Indiranagar, Bangalore',
+  },
+  {
+    id: 'ORD-2026-006',
+    patientName: 'Meera Nair',
+    patientAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Azithromycin 500mg', quantity: 1, price: 180 },
+      { name: 'Pantoprazole 40mg', quantity: 1, price: 110 },
+    ],
+    total: 290,
+    status: 'processing',
+    prescription: true,
+    prescriptionVerified: true,
+    orderDate: '31 Jan 2026, 08:45 AM',
+    deliveryAddress: 'MG Road, Kochi',
+  },
+  {
+    id: 'ORD-2026-007',
+    patientName: 'Arjun Mehta',
+    patientAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Omeprazole 20mg', quantity: 2, price: 95 },
+      { name: 'Digital Thermometer', quantity: 1, price: 299 },
+    ],
+    total: 489,
+    status: 'delivered',
+    prescription: true,
+    prescriptionVerified: true,
+    orderDate: '28 Jan 2026, 02:30 PM',
+    deliveryAddress: 'Connaught Place, Delhi',
+  },
+  {
+    id: 'ORD-2026-008',
+    patientName: 'Kavita Desai',
+    patientAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Aspirin 75mg', quantity: 1, price: 55 },
+      { name: 'Amlodipine 5mg', quantity: 1, price: 120 },
+    ],
+    total: 175,
+    status: 'cancelled',
+    prescription: true,
+    prescriptionVerified: false,
+    orderDate: '27 Jan 2026, 05:00 PM',
+    deliveryAddress: 'Viman Nagar, Pune',
+  },
+];
 
 export function OrdersManager() {
   const [orders, setOrders] = useState<PatientOrder[]>(initialOrders);
@@ -25,13 +148,13 @@ export function OrdersManager() {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          order.id.toLowerCase().includes(searchQuery.toLowerCase());
+      order.id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
   const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    setOrders(orders.map(o => 
+    setOrders(orders.map(o =>
       o.id === orderId ? { ...o, status: newStatus } : o
     ));
     toast.success(`Order ${orderId} marked as ${newStatus}`);
@@ -93,7 +216,7 @@ export function OrdersManager() {
               onClick={() => setFilterStatus(status)}
               className={cn(
                 "p-3 rounded-xl border text-center transition-all",
-                filterStatus === status 
+                filterStatus === status
                   ? getStatusColor(status)
                   : "bg-card border-border hover:border-primary/50"
               )}
@@ -177,7 +300,7 @@ export function OrdersManager() {
                       {order.prescription && (
                         <span className={cn(
                           "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-                          order.prescriptionVerified 
+                          order.prescriptionVerified
                             ? "bg-emerald-100 text-emerald-700"
                             : "bg-amber-100 text-amber-700"
                         )}>
