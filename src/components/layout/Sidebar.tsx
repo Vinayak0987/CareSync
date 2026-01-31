@@ -96,17 +96,19 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
             ))}
           </nav>
 
-          {/* User Profile */}
+            {/* User Profile */}
           <div className="p-4 border-t border-sidebar-border">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent">
-              <img 
-                src={currentPatient.avatar} 
-                alt={currentPatient.name}
-                className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/20"
-              />
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                {JSON.parse(localStorage.getItem('user') || '{}')?.name?.charAt(0) || 'P'}
+              </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{currentPatient.name}</p>
-                <p className="text-xs text-muted-foreground">Patient</p>
+                <p className="font-medium text-sm truncate">
+                  {JSON.parse(localStorage.getItem('user') || '{}')?.name || 'Patient'}
+                </p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {JSON.parse(localStorage.getItem('user') || '{}')?.role || 'Patient'}
+                </p>
               </div>
               <button 
                 onClick={onLogout}

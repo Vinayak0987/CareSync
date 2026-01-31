@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Sun, Moon, Bell, TrendingDown, TrendingUp, Minus } from 'lucide-react';
 import { VitalsCard } from './VitalsCard';
@@ -8,8 +8,23 @@ import { QuickVitalsLog } from './QuickVitalsLog';
 import { CriticalAlertModal } from './CriticalAlertModal';
 import { currentPatient, currentVitals, upcomingAppointments } from '@/lib/mockData';
 
+import api from '@/lib/api';
+import { toast } from 'sonner';
+
 interface DashboardHomeProps {
   onNavigate: (tab: string) => void;
+}
+
+interface Vital {
+  _id: string;
+  type: string;
+  value: string;
+  unit: string;
+  status: string;
+  createdAt: string;
+  // mapped properties for display
+  trend?: string; 
+  timestamp?: string;
 }
 
 // Icons for different vital types
@@ -27,8 +42,41 @@ const vitalLabels: Record<string, string> = {
   oxygen: 'Oxygen Level',
 };
 
+// Helper to format date
+const formatTime = (dateString: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
 export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   const [showCriticalAlert, setShowCriticalAlert] = useState(false);
+  const [vitals, setVitals] = useState<Vital[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch Vitals
+  const fetchVitals = async () => {
+    try {
+      const response = await api.get('/vitals/latest');
+      setVitals(response.data.map((v: any) => ({
+        ...v,
+        timestamp: formatTime(v.createdAt),
+        trend: 'stable' // backend doesn't calculate trend yet
+      })));
+    } catch (error) {
+      console.error('Failed to fetch vitals', error);
+      // Fallback to mock data for demo if API fails or is empty initially?
+      // For now just show nothing or maybe initial empty state is better.
+      // Or maybe we load mock data if empty?
+      // setVitals(currentVitals); 
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVitals();
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -100,9 +148,14 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
       <div>
         <h2 className="font-display font-semibold text-lg mb-4">Your Vitals</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {currentVitals.map((vital, index) => (
+          {vitals.length === 0 && !isLoading && (
+            <div className="col-span-4 text-center py-8 text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
+              No recent vitals recorded. Add your first reading below! 👇
+            </div>
+          )}
+          {vitals.map((vital, index) => (
             <motion.div
-              key={vital.id}
+              key={vital._id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -113,9 +166,9 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
                 <div className={`w-10 h-10 rounded-xl ${vitalIcons[vital.type]?.bgColor || 'bg-gray-50'} flex items-center justify-center text-xl`}>
                   {vitalIcons[vital.type]?.icon || '📊'}
                 </div>
-                <div className={`flex items-center gap-1 text-xs font-medium ${getTrendColor(vital.trend)}`}>
-                  {getTrendIcon(vital.trend)}
-                  <span>{getTrendLabel(vital.trend)}</span>
+                <div className={`flex items-center gap-1 text-xs font-medium ${getTrendColor(vital.trend || 'stable')}`}>
+                  {getTrendIcon(vital.trend || 'stable')}
+                  <span>{getTrendLabel(vital.trend || 'stable')}</span>
                 </div>
               </div>
 
@@ -142,7 +195,10 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
       {/* Bottom Grid - Medicines and Quick Vitals */}
       <div className="grid lg:grid-cols-2 gap-6">
         <MedicineChecklist />
-        <QuickVitalsLog onCriticalAlert={() => setShowCriticalAlert(true)} />
+        <QuickVitalsLog 
+          onCriticalAlert={() => setShowCriticalAlert(true)} 
+          onLogSuccess={fetchVitals}
+        />
       </div>
 
       {/* Critical Alert Modal */}

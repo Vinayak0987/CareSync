@@ -7,6 +7,7 @@ import { ReportsView } from '@/components/reports/ReportsView';
 import { ConsultationRoom } from '@/components/consultation/ConsultationRoom';
 import { MedicalStoreView } from '@/components/store/MedicalStoreView';
 import { WellnessView } from '@/components/wellness/WellnessView';
+import { EmergencyButton } from '@/components/emergency/EmergencyGuide';
 
 interface IndexProps {
   onLogout: () => void;
@@ -45,6 +46,9 @@ const Index = ({ onLogout }: IndexProps) => {
           {renderContent()}
         </div>
       </main>
+
+      {/* Floating Emergency Button - Always visible */}
+      <EmergencyButton />
     </div>
   );
 };

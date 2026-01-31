@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, Star, ChevronLeft, ChevronRight, Search, Filter, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,8 +6,21 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { doctors, availableTimeSlots, type Doctor } from '@/lib/mockData';
+// import { doctors, availableTimeSlots, type Doctor } from '@/lib/mockData';
+import { availableTimeSlots } from '@/lib/mockData'; // Keep timeslots mock for now or move to backend config
 import { toast } from 'sonner';
+import api from '@/lib/api';
+
+interface Doctor {
+  _id: string;
+  name: string;
+  specialty: string;
+  role: string;
+  avatar?: string;
+  rating?: number;
+  experience?: number;
+  // available?: boolean; // dynamic from backend logic later
+}
 
 interface AppointmentsViewProps {
   onNavigate: (tab: string) => void;
@@ -16,12 +29,32 @@ interface AppointmentsViewProps {
 export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
   const [specialty, setSpecialty] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
+
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+
+  const fetchDoctors = async () => {
+    try {
+      // In a real app, you might want to filter by role=doctor
+      const response = await api.get('/doctors');
+      setDoctors(response.data);
+    } catch (error) {
+      console.error('Failed to fetch doctors', error);
+      toast.error('Failed to load doctors');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Generate calendar dates
   const today = new Date();
@@ -32,9 +65,9 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
   });
 
   const filteredDoctors = doctors.filter(doc => {
-    const matchesSpecialty = specialty === 'all' || doc.specialty.toLowerCase().includes(specialty.toLowerCase());
+    const matchesSpecialty = specialty === 'all' || (doc.specialty && doc.specialty.toLowerCase().includes(specialty.toLowerCase()));
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          doc.specialty.toLowerCase().includes(searchQuery.toLowerCase());
+                          (doc.specialty && doc.specialty.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSpecialty && matchesSearch;
   });
 
@@ -43,21 +76,38 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
     setShowBookingModal(true);
   };
 
-  const confirmBooking = () => {
-    if (!selectedDate || !selectedTime) return;
+  const confirmBooking = async () => {
+    if (!selectedDate || !selectedTime || !selectedDoctor) return;
     
-    setBookingConfirmed(true);
-    setTimeout(() => {
-      setShowBookingModal(false);
-      setBookingConfirmed(false);
-      setSelectedDoctor(null);
-      setSelectedDate(null);
-      setSelectedTime(null);
-      setReason('');
-      toast.success('Appointment booked successfully!', {
-        description: `With ${selectedDoctor?.name} on ${dates[selectedDate].toLocaleDateString()} at ${selectedTime}`,
+    setIsBooking(true);
+    try {
+      const appointmentDate = dates[selectedDate];
+      
+      await api.post('/appointments', {
+        doctorId: selectedDoctor._id,
+        date: appointmentDate,
+        time: selectedTime,
+        reason: reason || 'General Consultation',
       });
-    }, 2000);
+
+      setBookingConfirmed(true);
+      setTimeout(() => {
+        setShowBookingModal(false);
+        setBookingConfirmed(false);
+        setSelectedDoctor(null);
+        setSelectedDate(null);
+        setSelectedTime(null);
+        setReason('');
+        toast.success('Appointment booked successfully!', {
+          description: `With ${selectedDoctor?.name} on ${dates[selectedDate].toLocaleDateString()} at ${selectedTime}`,
+        });
+      }, 2000);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.message || 'Failed to book appointment');
+    } finally {
+      setIsBooking(false);
+    }
   };
 
   return (
@@ -105,7 +155,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
       <div className="grid gap-4">
         {filteredDoctors.map((doctor, index) => (
           <motion.div
-            key={doctor.id}
+            key={doctor._id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -113,7 +163,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
           >
             <div className="flex flex-col sm:flex-row gap-4">
               <img
-                src={doctor.avatar}
+                src={doctor.avatar || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=faces'}
                 alt={doctor.name}
                 className="w-20 h-20 rounded-xl object-cover ring-2 ring-primary/10"
               />
@@ -131,22 +181,18 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                 <p className="text-sm text-muted-foreground mb-3">
                   {doctor.experience} years experience
                 </p>
-                <div className="flex flex-wrap items-center gap-3">
-                  {doctor.available ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success/10 text-success text-xs font-medium rounded-full">
-                      <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
-                      Available Now
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      Next available: {doctor.nextAvailable}
-                    </span>
-                  )}
+                <div className="flex flex-wrap items-center justify-center sm:justify-between gap-3 mt-4 pt-3 border-t border-border/50">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success/10 text-success text-xs font-medium rounded-full">
+                    <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
+                    Available Now
+                  </span>
                   <Button 
                     onClick={() => handleBook(doctor)}
                     size="sm"
-                    className={doctor.available ? 'btn-hero text-sm py-2' : ''}
-                    variant={doctor.available ? 'default' : 'outline'}
+                    className={cn(
+                      "w-full sm:w-auto min-w-[140px]",
+                      'btn-hero text-sm py-2'
+                    )}
                   >
                     Book Appointment
                   </Button>
@@ -192,7 +238,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img
-                          src={selectedDoctor.avatar}
+                          src={selectedDoctor.avatar || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=faces'}
                           alt={selectedDoctor.name}
                           className="w-12 h-12 rounded-xl object-cover"
                         />
