@@ -39,6 +39,8 @@ const userSchema = mongoose.Schema(
       phone: { type: String },
     },
     allergies: { type: String },
+    chronicDiseases: [{ type: String }],
+    medicalReport: { type: String }, // URL or Path to file
   },
   {
     timestamps: true,

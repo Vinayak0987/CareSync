@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, 
@@ -9,7 +9,6 @@ import {
   Wind,
   Calendar,
   Download,
-  Pill
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -21,74 +20,133 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  BarChart,
-  Bar
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { vitalsHistory, medicationAdherence, currentVitals } from '@/lib/mockData';
+import api from '@/lib/api';
+import { toast } from 'sonner';
 
-type ChartType = 'bloodPressure' | 'bloodSugar' | 'heartRate' | 'oxygen';
+type ChartType = 'blood_pressure' | 'blood_sugar' | 'glucose' | 'heart_rate';
 
 const chartTabs: { id: ChartType; label: string; icon: React.ElementType; color: string }[] = [
-  { id: 'bloodPressure', label: 'Blood Pressure', icon: Activity, color: '#f43f5e' },
-  { id: 'bloodSugar', label: 'Blood Sugar', icon: Droplets, color: '#f59e0b' },
-  { id: 'heartRate', label: 'Heart Rate', icon: Heart, color: '#10b981' },
-  { id: 'oxygen', label: 'SpO2', icon: Wind, color: '#0ea5e9' },
+  { id: 'blood_pressure', label: 'Blood Pressure', icon: Activity, color: '#f43f5e' },
+ { id: 'blood_sugar', label: 'Blood Sugar', icon: Droplets, color: '#f59e0b' },
+  { id: 'glucose', label: 'Glucose', icon: Droplets, color: '#a855f7' },
+  { id: 'heart_rate', label: 'Heart Rate', icon: Heart, color: '#10b981' },
 ];
 
 export function ReportsView() {
-  const [activeChart, setActiveChart] = useState<ChartType>('bloodPressure');
+  const [activeChart, setActiveChart] = useState<ChartType>('blood_pressure');
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
+  const [vitals, setVitals] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getChartData = () => {
-    switch (activeChart) {
-      case 'bloodPressure':
-        return vitalsHistory.map(v => ({
-          date: v.date,
-          systolic: v.systolic,
-          diastolic: v.diastolic,
-        }));
-      case 'bloodSugar':
-        return vitalsHistory.map(v => ({
-          date: v.date,
-          value: v.bloodSugar,
-        }));
-      case 'heartRate':
-        return vitalsHistory.map(v => ({
-          date: v.date,
-          value: v.heartRate,
-        }));
-      case 'oxygen':
-        return vitalsHistory.map(v => ({
-          date: v.date,
-          value: v.oxygen,
-        }));
-      default:
-        return [];
+  useEffect(() => {
+    fetchVitals();
+  }, []);
+
+  const fetchVitals = async () => {
+    try {
+      const response = await api.get('/vitals');
+      setVitals(response.data);
+    } catch (error) {
+      console.error('Failed to fetch vitals', error);
+      toast.error('Failed to load health data');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const getAdherencePercent = () => {
-    const total = medicationAdherence.reduce((acc, curr) => acc + curr.total, 0);
-    const taken = medicationAdherence.reduce((acc, curr) => acc + curr.taken, 0);
-    return Math.round((taken / total) * 100);
+  // Filter vitals by time range
+  const getFilteredVitals = () => {
+    const now = new Date();
+    const daysToShow = timeRange === 'week' ? 7 : 30;
+    const cutoffDate = new Date(now.getTime() - daysToShow * 24 * 60 * 60 * 1000);
+
+    return vitals
+      .filter((v: any) => new Date(v.createdAt) >= cutoffDate)
+      .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  };
+
+  const getChartData = () => {
+    const filtered = getFilteredVitals();
+    
+    if (activeChart === 'blood_pressure') {
+      return filtered
+        .filter((v: any) => v.type === 'blood_pressure')
+        .map((v: any) => {
+          const [systolic, diastolic] = v.value.split('/').map(Number);
+          return {
+            date: new Date(v.createdAt).toLocaleDateString('en', { month: 'short', day: 'numeric' }),
+            systolic,
+            diastolic,
+          };
+        });
+    } else {
+      return filtered
+        .filter((v: any) => v.type === activeChart)
+        .map((v: any) => ({
+          date: new Date(v.createdAt).toLocaleDateString('en', { month: 'short', day: 'numeric' }),
+          value: parseFloat(v.value),
+        }));
+    }
   };
 
   const getLatestComparison = () => {
-    const latest = vitalsHistory[vitalsHistory.length - 1];
-    const previous = vitalsHistory[vitalsHistory.length - 2];
+    const filtered = getFilteredVitals();
     
+    const getBP = (vitals: any[]) => {
+      const bp = vitals.find(v => v.type === 'blood_pressure');
+      return bp ? parseInt(bp.value.split('/')[0]) : 0;
+    };
+
+    const getValue = (vitals: any[], type: string) => {
+      const vital = vitals.find(v => v.type === type);
+      return vital ? parseFloat(vital.value) : 0;
+    };
+
+    const latest = filtered.slice(-1)[0];
+    const previous = filtered.slice(-2)[0];
+
+    if (!latest || !previous) return { bp: 0, sugar: 0, hr: 0 };
+
     return {
-      bp: latest.systolic - previous.systolic,
-      sugar: latest.bloodSugar - previous.bloodSugar,
-      hr: latest.heartRate - previous.heartRate,
+      bp: getBP([latest]) - getBP([previous]),
+      sugar: getValue([latest], 'blood_sugar') - getValue([previous], 'blood_sugar'),
+      hr: getValue([latest], 'heart_rate') - getValue([previous], 'heart_rate'),
     };
   };
 
   const comparison = getLatestComparison();
   const chartData = getChartData();
-  const activeTab = chartTabs.find(t => t.id === activeChart)!;
+  const activeTab = chartTabs.find(t => t.id === activeChart) || chartTabs[0];
+
+  // Count appointments this month
+  const [appointmentsCount, setAppointmentsCount] = useState(0);
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await api.get('/appointments');
+        const now = new Date();
+        const thisMonth = response.data.filter((apt: any) => {
+          const aptDate = new Date(apt.date);
+          return aptDate.getMonth() === now.getMonth() && aptDate.getFullYear() === now.getFullYear();
+        });
+        setAppointmentsCount(thisMonth.length);
+      } catch (error) {
+        console.error('Failed to fetch appointments', error);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -124,7 +182,11 @@ export function ReportsView() {
               Month
             </button>
           </div>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => toast.info('Export feature coming soon!')}
+          >
             <Download size={16} className="mr-2" />
             Export
           </Button>
@@ -137,16 +199,16 @@ export function ReportsView() {
         animate={{ opacity: 1, y: 0 }}
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        {/* Medication Adherence */}
+        {/* Total Vitals */}
         <div className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Pill size={16} className="text-primary" />
+              <Activity size={16} className="text-primary" />
             </div>
-            <span className="text-sm font-medium">Adherence</span>
+            <span className="text-sm font-medium">Total Vitals</span>
           </div>
-          <p className="text-2xl font-display font-bold text-primary">{getAdherencePercent()}%</p>
-          <p className="text-xs text-muted-foreground">This week</p>
+          <p className="text-2xl font-display font-bold text-primary">{vitals.length}</p>
+          <p className="text-xs text-muted-foreground">Recorded</p>
         </div>
 
         {/* BP Change */}
@@ -167,7 +229,7 @@ export function ReportsView() {
               <TrendingDown size={18} className="text-emerald-500" />
             ) : null}
           </div>
-          <p className="text-xs text-muted-foreground">vs yesterday</p>
+          <p className="text-xs text-muted-foreground">vs previous</p>
         </div>
 
         {/* Sugar Change */}
@@ -199,7 +261,7 @@ export function ReportsView() {
             </div>
             <span className="text-sm font-medium">Checkups</span>
           </div>
-          <p className="text-2xl font-display font-bold">7</p>
+          <p className="text-2xl font-display font-bold">{appointmentsCount}</p>
           <p className="text-xs text-muted-foreground">This month</p>
         </div>
       </motion.div>
@@ -213,128 +275,103 @@ export function ReportsView() {
       >
         {/* Tab Header */}
         <div className="flex overflow-x-auto border-b border-border">
-          {chartTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveChart(tab.id)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px",
-                activeChart === tab.id 
-                  ? "border-primary text-primary bg-primary/5" 
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <tab.icon size={16} />
-              {tab.label}
-            </button>
-          ))}
+          {chartTabs
+            .filter(tab => {
+              // Only show charts that have data
+              const hasData = vitals.some((v: any) => v.type === tab.id);
+              return hasData;
+            })
+            .map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveChart(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px",
+                  activeChart === tab.id 
+                    ? "border-primary text-primary bg-primary/5" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <tab.icon size={16} />
+                {tab.label}
+              </button>
+            ))}
         </div>
 
         {/* Chart Content */}
         <div className="p-6">
           <h3 className="font-display font-semibold text-lg mb-4">
-            {activeTab.label} - Last 7 Days
+            {activeTab.label} - Last {timeRange === 'week' ? '7' : '30'} Days
           </h3>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              {activeChart === 'bloodPressure' ? (
-                <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" domain={[60, 150]} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                    }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="systolic" 
-                    stroke="#f43f5e" 
-                    strokeWidth={2}
-                    dot={{ fill: '#f43f5e', strokeWidth: 2, r: 4 }}
-                    name="Systolic"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="diastolic" 
-                    stroke="#8b5cf6" 
-                    strokeWidth={2}
-                    dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
-                    name="Diastolic"
-                  />
-                </LineChart>
-              ) : (
-                <AreaChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                    }}
-                  />
-                  <defs>
-                    <linearGradient id={`gradient-${activeTab.id}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={activeTab.color} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={activeTab.color} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <Area 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke={activeTab.color}
-                    strokeWidth={2}
-                    fill={`url(#gradient-${activeTab.id})`}
-                    name={activeTab.label}
-                  />
-                </AreaChart>
-              )}
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Medication Adherence Chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-card rounded-xl border border-border p-6"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-semibold text-lg">Medication Adherence</h3>
-          <span className="text-sm text-muted-foreground">Daily doses taken</span>
-        </div>
-        <div className="h-48 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={medicationAdherence} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-              <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" domain={[0, 3]} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                }}
-                formatter={(value: number, name: string) => [value, name === 'taken' ? 'Doses Taken' : name]}
-              />
-              <Bar 
-                dataKey="taken" 
-                fill="hsl(168 84% 32%)" 
-                radius={[4, 4, 0, 0]}
-                name="Doses Taken"
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          {chartData.length === 0 ? (
+            <div className="h-64 flex items-center justify-center">
+              <p className="text-muted-foreground">No data available for this period</p>
+            </div>
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                {activeChart === 'blood_pressure' ? (
+                  <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" domain={[60, 180]} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="systolic" 
+                      stroke="#f43f5e" 
+                      strokeWidth={2}
+                      dot={{ fill: '#f43f5e', strokeWidth: 2, r: 4 }}
+                      name="Systolic"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="diastolic" 
+                      stroke="#8b5cf6" 
+                      strokeWidth={2}
+                      dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                      name="Diastolic"
+                    />
+                  </LineChart>
+                ) : (
+                  <AreaChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <defs>
+                      <linearGradient id={`gradient-${activeTab.id}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={activeTab.color} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={activeTab.color} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke={activeTab.color}
+                      strokeWidth={2}
+                      fill={`url(#gradient-${activeTab.id})`}
+                      name={activeTab.label}
+                    />
+                  </AreaChart>
+                )}
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </motion.div>
 
@@ -345,29 +382,35 @@ export function ReportsView() {
         transition={{ delay: 0.3 }}
         className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-xl border border-primary/20 p-6"
       >
-        <h3 className="font-display font-semibold text-lg mb-3">📊 Weekly Health Summary</h3>
-        <div className="grid sm:grid-cols-2 gap-4 text-sm">
-          <div className="space-y-2">
-            <p className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Blood pressure is within normal range
-            </p>
-            <p className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Heart rate stable at 72 bpm average
-            </p>
+        <h3 className="font-display font-semibold text-lg mb-3">📊 Health Summary</h3>
+        {vitals.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Start logging your vitals to see personalized health insights here!
+          </p>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-4 text-sm">
+            <div className="space-y-2">
+              <p className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                {vitals.length} health metrics recorded
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                Regular monitoring active
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-sky-500" />
+                {appointmentsCount} consultation{appointmentsCount !== 1 ? 's' : ''} this month
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                Keep tracking for better insights
+              </p>
+            </div>
           </div>
-          <div className="space-y-2">
-            <p className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
-              Missed 2 medication doses this week
-            </p>
-            <p className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Oxygen levels consistently above 97%
-            </p>
-          </div>
-        </div>
+        )}
       </motion.div>
     </div>
   );

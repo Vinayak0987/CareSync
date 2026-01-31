@@ -224,7 +224,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess }: QuickVitalsLog
         </div>
 
         {/* Important Warning */}
-        <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+        {/* <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
           <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
             <AlertTriangle size={16} className="text-amber-600" />
           </div>
@@ -236,7 +236,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess }: QuickVitalsLog
               If your BP is above <strong>160/100</strong>, we will immediately connect you with a doctor for urgent care. Your health is our priority!
             </p>
           </div>
-        </div>
+        </div> */}
 
         {/* Submit Button */}
         <Button 

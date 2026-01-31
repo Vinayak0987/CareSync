@@ -5,6 +5,8 @@ import { VitalsCard } from './VitalsCard';
 import { NextAppointment } from './NextAppointment';
 import { MedicineChecklist } from './MedicineChecklist';
 import { QuickVitalsLog } from './QuickVitalsLog';
+import { DiseaseVitalsLog } from './DiseaseVitalsLog';
+import { AIPredictions } from './AIPredictions';
 import { CriticalAlertModal } from './CriticalAlertModal';
 import { currentPatient, currentVitals, upcomingAppointments } from '@/lib/mockData';
 
@@ -33,6 +35,11 @@ const vitalIcons: Record<string, { icon: string; bgColor: string }> = {
   blood_sugar: { icon: '🩸', bgColor: 'bg-amber-50' },
   heart_rate: { icon: '❤️', bgColor: 'bg-emerald-50' },
   oxygen: { icon: '🫁', bgColor: 'bg-sky-50' },
+  glucose: { icon: '🍬', bgColor: 'bg-purple-50' },
+  bmi: { icon: '⚖️', bgColor: 'bg-blue-50' },
+  cholesterol: { icon: '🧈', bgColor: 'bg-yellow-50' },
+  avg_glucose: { icon: '📊', bgColor: 'bg-indigo-50' },
+  smoking_status: { icon: '🚭', bgColor: 'bg-gray-50' },
 };
 
 const vitalLabels: Record<string, string> = {
@@ -40,6 +47,11 @@ const vitalLabels: Record<string, string> = {
   blood_sugar: 'Blood Sugar',
   heart_rate: 'Heart Rate',
   oxygen: 'Oxygen Level',
+  glucose: 'Glucose',
+  bmi: 'BMI',
+  cholesterol: 'Cholesterol',
+  avg_glucose: 'Avg Glucose',
+  smoking_status: 'Smoking Status',
 };
 
 // Helper to format date
@@ -53,6 +65,19 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   const [showCriticalAlert, setShowCriticalAlert] = useState(false);
   const [vitals, setVitals] = useState<Vital[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasChronicDisease, setHasChronicDisease] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+
+  // Fetch user data
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    setUserData(user);
+    
+    if (user.chronicDiseases && user.chronicDiseases.length > 0) {
+      const disease = user.chronicDiseases[0];
+      setHasChronicDisease(disease === 'diabetes' || disease === 'heart_diseases' || disease === 'hypertension');
+    }
+  }, []);
 
   // Fetch Vitals
   const fetchVitals = async () => {
@@ -87,6 +112,35 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
   const greeting = getGreeting();
   const GreetingIcon = greeting.icon;
+
+  const getRelevantVitalTypes = () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (!user.chronicDiseases || user.chronicDiseases.length === 0) {
+      return null; // Show all vitals for users without chronic disease
+    }
+
+    const disease = user.chronicDiseases[0];
+    
+    switch(disease) {
+      case 'diabetes':
+        return ['glucose', 'blood_pressure', 'bmi'];
+      case 'heart_diseases':
+        return ['blood_pressure', 'cholesterol', 'blood_sugar', 'heart_rate'];
+      case 'hypertension':
+        return ['avg_glucose', 'blood_pressure', 'bmi', 'smoking_status'];
+      default:
+        return null; // Show all for "other" or "none"
+    }
+  };
+
+  // Filter vitals based on disease
+  const getFilteredVitals = () => {
+    const relevantTypes = getRelevantVitalTypes();
+    if (!relevantTypes) return vitals; // Show all if no specific disease
+    return vitals.filter(vital => relevantTypes.includes(vital.type));
+  };
+
+  const filteredVitals = getFilteredVitals();
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
@@ -128,7 +182,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
             <span className="text-sm">{greeting.text}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-bold">
-            Welcome back, <span className="gradient-text">{currentPatient.name.split(' ')[0]}</span>
+            Welcome back, <span className="gradient-text">{userData?.name?.split(' ')[0] || 'User'}</span>
           </h1>
         </div>
 
@@ -140,7 +194,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
       {/* Next Appointment */}
       <NextAppointment 
-        appointment={upcomingAppointments[0]} 
         onJoinCall={() => onNavigate('consultation')}
       />
 
@@ -148,12 +201,12 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
       <div>
         <h2 className="font-display font-semibold text-lg mb-4">Your Vitals</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {vitals.length === 0 && !isLoading && (
+          {filteredVitals.length === 0 && !isLoading && (
             <div className="col-span-4 text-center py-8 text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
               No recent vitals recorded. Add your first reading below! 👇
             </div>
           )}
-          {vitals.map((vital, index) => (
+          {filteredVitals.map((vital, index) => (
             <motion.div
               key={vital._id}
               initial={{ opacity: 0, y: 20 }}
@@ -192,13 +245,28 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         </div>
       </div>
 
+      {/* AI Predictions Section */}
+      {hasChronicDisease && vitals.length > 0 && (
+        <AIPredictions 
+          recentVitals={vitals} 
+          chronicDisease={JSON.parse(localStorage.getItem('user') || '{}').chronicDiseases?.[0]}
+        />
+      )}
+
       {/* Bottom Grid - Medicines and Quick Vitals */}
       <div className="grid lg:grid-cols-2 gap-6">
         <MedicineChecklist />
-        <QuickVitalsLog 
-          onCriticalAlert={() => setShowCriticalAlert(true)} 
-          onLogSuccess={fetchVitals}
-        />
+        {hasChronicDisease ? (
+          <DiseaseVitalsLog 
+            onCriticalAlert={() => setShowCriticalAlert(true)} 
+            onLogSuccess={fetchVitals}
+          />
+        ) : (
+          <QuickVitalsLog 
+            onCriticalAlert={() => setShowCriticalAlert(true)} 
+            onLogSuccess={fetchVitals}
+          />
+        )}
       </div>
 
       {/* Critical Alert Modal */}
