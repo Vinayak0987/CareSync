@@ -1,12 +1,43 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { DashboardHome } from '@/components/dashboard/DashboardHome';
+import { AppointmentsView } from '@/components/appointments/AppointmentsView';
+import { RecordsView } from '@/components/records/RecordsView';
+import { ConsultationRoom } from '@/components/consultation/ConsultationRoom';
+import { MedicalStoreView } from '@/components/store/MedicalStoreView';
+import { WellnessView } from '@/components/wellness/WellnessView';
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState('home');
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return <DashboardHome onNavigate={setActiveTab} />;
+      case 'appointments':
+        return <AppointmentsView onNavigate={setActiveTab} />;
+      case 'records':
+        return <RecordsView onNavigate={setActiveTab} />;
+      case 'consultation':
+        return <ConsultationRoom onNavigate={setActiveTab} />;
+      case 'store':
+        return <MedicalStoreView />;
+      case 'wellness':
+        return <WellnessView />;
+      default:
+        return <DashboardHome onNavigate={setActiveTab} />;
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      
+      <main className="flex-1 lg:ml-0 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
+        <div className="max-w-6xl mx-auto">
+          {renderContent()}
+        </div>
+      </main>
     </div>
   );
 };
