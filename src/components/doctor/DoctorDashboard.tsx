@@ -14,10 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
-<<<<<<< HEAD
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-=======
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 
 // Type definition for appointment data from API
 interface DoctorAppointment {
@@ -45,16 +42,11 @@ interface DoctorDashboardProps {
 }
 
 export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashboardProps) {
-<<<<<<< HEAD
   const { t, td, tf, language } = useLanguage();
-=======
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
   const [stats, setStats] = useState({ today: { total: 0, completed: 0 }, week: { total: 0, completed: 0 } });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-<<<<<<< HEAD
-
   // Get doctor info from localStorage
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const doctorName = user.name || 'Doctor';
@@ -80,17 +72,6 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
     };
     return localeMap[language] || 'en-US';
   };
-
-=======
-
-  // Get doctor info from localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const doctorName = user.name || 'Doctor';
-
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
-
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
   // Fetch today's appointments
   useEffect(() => {
     const fetchData = async () => {
@@ -116,10 +97,7 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
 
   const completedCount = appointments.filter(a => a.status === 'completed').length;
   const waitingCount = appointments.filter(a => a.status === 'waiting' || a.status === 'confirmed').length;
-<<<<<<< HEAD
-=======
   const inProgressCount = appointments.filter(a => a.status === 'in-progress').length;
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 
   const getStatusColor = (status: DoctorAppointment['status']) => {
     switch (status) {
@@ -173,11 +151,7 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
         <p className="text-red-700">{error}</p>
         <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-<<<<<<< HEAD
           {t('tryAgain' as any) || 'Try Again'}
-=======
-          Try Again
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
         </Button>
       </div>
     );
@@ -219,11 +193,7 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
             </div>
             <div>
               <p className="text-2xl font-display font-bold">{appointments.length}</p>
-<<<<<<< HEAD
               <p className="text-xs text-muted-foreground">{t('totalToday' as any)}</p>
-=======
-              <p className="text-xs text-muted-foreground">Total Today</p>
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
             </div>
           </div>
         </div>
@@ -286,13 +256,8 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
           {appointments.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <Calendar size={48} className="mx-auto mb-3 text-muted-foreground/50" />
-<<<<<<< HEAD
               <p className="font-medium">{t('noAppointments' as any)}</p>
               <p className="text-sm">{t('appointmentsWillAppear' as any)}</p>
-=======
-              <p className="font-medium">No appointments scheduled for today</p>
-              <p className="text-sm">Appointments will appear here when patients book with you</p>
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
             </div>
           ) : (
             appointments.map((appointment, index) => (
@@ -331,11 +296,7 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
                         key={condition}
                         className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] rounded-full"
                       >
-<<<<<<< HEAD
                         {td(condition)}
-=======
-                        {condition}
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
                       </span>
                     ))}
                   </div>
@@ -347,11 +308,7 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
                       getStatusColor(appointment.status)
                     )}>
                       {getStatusIcon(appointment.status)}
-<<<<<<< HEAD
                       <span className="hidden sm:inline capitalize">{td(appointment.status.replace('-', ' '))}</span>
-=======
-                      <span className="hidden sm:inline capitalize">{appointment.status.replace('-', ' ')}</span>
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
                     </span>
 
                     {(appointment.status === 'waiting' || appointment.status === 'confirmed' || appointment.status === 'in-progress') && (
@@ -361,11 +318,7 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
                         className={appointment.status === 'in-progress' ? 'btn-hero' : ''}
                       >
                         <Video size={14} className="mr-1" />
-<<<<<<< HEAD
                         {appointment.status === 'in-progress' ? (t('resume' as any) || 'Resume') : (t('start' as any) || 'Start')}
-=======
-                        {appointment.status === 'in-progress' ? 'Resume' : 'Start'}
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
                       </Button>
                     )}
                   </div>
@@ -392,19 +345,11 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-2xl font-display font-bold text-primary">{stats.week.total}</p>
-<<<<<<< HEAD
               <p className="text-xs text-muted-foreground">{t('consultations' as any)}</p>
             </div>
             <div>
               <p className="text-2xl font-display font-bold text-emerald-600">{stats.week.completed}</p>
               <p className="text-xs text-muted-foreground">{t('completed' as any)}</p>
-=======
-              <p className="text-xs text-muted-foreground">Consultations</p>
-            </div>
-            <div>
-              <p className="text-2xl font-display font-bold text-emerald-600">{stats.week.completed}</p>
-              <p className="text-xs text-muted-foreground">Completed</p>
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
             </div>
             <div>
               <p className="text-2xl font-display font-bold text-sky-600">4.9</p>

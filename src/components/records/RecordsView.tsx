@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Download, Calendar, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-<<<<<<< HEAD
-=======
 import { toast } from 'sonner';
 import api from '@/lib/api';
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
+import { Stethoscope, Pill } from 'lucide-react';
 
 interface RecordsViewProps {
   onNavigate: (tab: string) => void;
@@ -22,31 +20,6 @@ interface Appointment {
 }
 
 export function RecordsView({ onNavigate }: RecordsViewProps) {
-<<<<<<< HEAD
-  const records = [
-    {
-      id: 1,
-      title: 'Blood Test Results',
-      date: '2024-01-25',
-      doctor: 'Dr. Sarah Johnson',
-      type: 'Lab Report',
-    },
-    {
-      id: 2,
-      title: 'X-Ray Chest',
-      date: '2024-01-20',
-      doctor: 'Dr. Michael Chen',
-      type: 'Imaging',
-    },
-    {
-      id: 3,
-      title: 'Annual Checkup',
-      date: '2024-01-15',
-      doctor: 'Dr. Sarah Johnson',
-      type: 'General',
-    },
-  ];
-=======
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [vitalsCount, setVitalsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,12 +53,13 @@ export function RecordsView({ onNavigate }: RecordsViewProps) {
     return aptDate.getFullYear() === now.getFullYear();
   }).length;
 
+  const records = [] as any[]; // Placeholder if we need mixed records
+
   const downloadPrescription = (id: string) => {
     toast.success('Prescription downloaded!', {
       description: 'PDF saved to your downloads folder',
     });
   };
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 
   if (isLoading) {
     return (
@@ -106,47 +80,6 @@ export function RecordsView({ onNavigate }: RecordsViewProps) {
         <p className="text-muted-foreground">View and download your medical documents</p>
       </motion.div>
 
-<<<<<<< HEAD
-      {/* Records List */}
-      <div className="grid gap-4">
-        {records.map((record, index) => (
-          <motion.div
-            key={record.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-card rounded-xl p-5 border border-border shadow-sm hover:shadow-md transition-all"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-4 flex-1">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <FileText size={24} className="text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-display font-semibold text-lg mb-1">{record.title}</h3>
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar size={14} />
-                      {record.date}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <User size={14} />
-                      {record.doctor}
-                    </span>
-                    <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
-                      {record.type}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <Button size="sm" variant="outline" className="flex-shrink-0">
-                <Download size={16} className="mr-2" />
-                Download
-              </Button>
-            </div>
-          </motion.div>
-        ))}
-=======
       {/* Summary Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -248,7 +181,6 @@ export function RecordsView({ onNavigate }: RecordsViewProps) {
             Prescriptions from your doctor consultations will appear here
           </p>
         </div>
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
       </div>
 
       {/* Empty State */}

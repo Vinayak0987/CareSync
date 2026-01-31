@@ -24,20 +24,7 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
-<<<<<<< HEAD
-=======
-const navItems = [
-  { id: 'home', label: 'Dashboard', icon: Home },
-  { id: 'appointments', label: 'Appointments', icon: Calendar },
-  { id: 'records', label: 'My Records', icon: FileText },
-  { id: 'reports', label: 'Reports', icon: BarChart3 },
-  { id: 'consultation', label: 'Consultation', icon: Video },
-  { id: 'store', label: 'Medical Store', icon: ShoppingBag },
-  { id: 'community', label: 'Community', icon: MessageSquare },
-  { id: 'wellness', label: 'Games & Activity', icon: Gamepad2 },
-];
 
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { t } = useLanguage();
@@ -50,6 +37,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
     { id: 'consultation', label: t('consultation'), icon: Video },
     { id: 'store', label: t('medicalStore'), icon: ShoppingBag },
     { id: 'wellness', label: t('wellness'), icon: Heart },
+    { id: 'community', label: 'Community', icon: MessageSquare },
   ];
 
   return (

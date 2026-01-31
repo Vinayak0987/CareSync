@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import api from '@/lib/api';
+import { toast } from 'sonner';
 
 type UserRole = 'patient' | 'doctor' | 'pharmacy';
 type Language = 'en' | 'hi' | 'mr' | 'ta' | 'te' | 'bn';
@@ -85,6 +87,12 @@ const translations = {
     department: 'Department',
     enterDepartment: 'e.g. IT, HR, Finance',
     adminInfo: 'Admin Details',
+    storeName: 'Pharmacy Name',
+    enterStoreName: 'Enter pharmacy name',
+    address: 'Address',
+    enterAddress: 'Enter pharmacy address',
+    operatingHours: 'Operating Hours',
+    enterOperatingHours: 'e.g. 9 AM - 9 PM',
   },
   hi: {
     welcome: 'वापसी पर स्वागत है!',
@@ -437,7 +445,7 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
 
   const [uploadingReport, setUploadingReport] = useState(false);
 
-  const t = translations[language];
+  const t = translations[language] as any;
   const totalSignupSteps = 3;
 
   const updateSignupData = (field: string, value: any) => {
@@ -472,7 +480,7 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isLogin && signupStep < totalSignupSteps) {
@@ -481,16 +489,6 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
     }
 
     setIsLoading(true);
-<<<<<<< HEAD
-    
-    // Save user profile for signup
-    if (!isLogin) {
-      localStorage.setItem('userProfile', JSON.stringify({
-        ...signupData,
-        email,
-      }));
-      localStorage.setItem('onboardingComplete', 'true');
-=======
 
     try {
       if (isLogin) {
@@ -499,6 +497,9 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
 
         // Store user data
         localStorage.setItem('user', JSON.stringify(response.data));
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
         toast.success(`Welcome back, ${response.data.name}!`);
 
         // Use the role from the response, but if the user selected a different role in UI, warn them or just use response role.
@@ -532,6 +533,9 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
         const response = await api.post('/auth/register', registerData);
 
         localStorage.setItem('user', JSON.stringify(response.data));
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
         localStorage.setItem('onboardingComplete', 'true'); // They just did it
 
         toast.success('Account created successfully! 🎉');
@@ -543,13 +547,7 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
       toast.error(message);
     } finally {
       setIsLoading(false);
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
     }
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      onLogin(selectedRole);
-    }, 1500);
   };
 
   const fillDemo = () => {

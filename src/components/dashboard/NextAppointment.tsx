@@ -2,12 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-<<<<<<< HEAD
-import { type Appointment } from '@/lib/mockData';
-import { doctors } from '@/lib/mockData';
-import { useLanguage } from '@/lib/i18n/LanguageContext';
-=======
 import api from '@/lib/api';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface Appointment {
   _id: string;
@@ -17,18 +13,13 @@ interface Appointment {
   reason?: string;
   status: string;
 }
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 
 interface NextAppointmentProps {
   onJoinCall: () => void;
 }
 
-<<<<<<< HEAD
-export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProps) {
-  const { t, td } = useLanguage();
-  
-=======
 export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
+  const { t } = useLanguage();
   const [appointment, setAppointment] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,7 +31,7 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
         
         // Find next upcoming appointment
         const upcoming = appointments
-          .filter((apt: Appointment) => apt.status === 'pending')
+          .filter((apt: Appointment) => apt.status === 'pending' || apt.status === 'confirmed')
           .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
         
         setAppointment(upcoming);
@@ -68,7 +59,6 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
     );
   }
 
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
   if (!appointment) {
     return (
       <motion.div
@@ -111,11 +101,7 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
           <h3 className="font-display font-semibold text-lg text-foreground">
             Dr. {appointment.doctorId?.name || 'Unknown'}
           </h3>
-<<<<<<< HEAD
-          <p className="text-sm text-primary font-medium">{td(appointment.specialty)}</p>
-=======
           <p className="text-sm text-primary font-medium">{appointment.doctorId?.specialty || 'General'}</p>
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
           
           {appointment.reason && (
             <p className="text-sm text-muted-foreground mt-2">
@@ -129,11 +115,7 @@ export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar size={16} />
-<<<<<<< HEAD
-              <span className="font-medium text-foreground">{t('today')}</span>
-=======
               <span className="font-medium text-foreground">{formattedDate}</span>
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
             </div>
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Clock size={16} />

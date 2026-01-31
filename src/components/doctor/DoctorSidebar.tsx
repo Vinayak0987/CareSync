@@ -1,26 +1,25 @@
 import { useState } from 'react';
-<<<<<<< HEAD
-import { 
-  LayoutDashboard, 
-  Video, 
-  Users, 
-=======
 import { motion } from 'framer-motion';
 import {
-  LayoutDashboard,
-  Video,
   Users,
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
-  Settings,
+  CheckCircle,
+  Clock,
+  IndianRupee,
+  Video,
+  Calendar,
+  TrendingUp,
+  AlertCircle,
+  Loader2,
+  Stethoscope,
+  Activity,
   LogOut,
   Menu,
   X,
-  Stethoscope,
-  Calendar,
-  MessageSquare
+  MessageSquare,
+  Settings,
+  LayoutDashboard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { currentDoctor } from '@/lib/mockData';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface DoctorSidebarProps {
@@ -29,26 +28,16 @@ interface DoctorSidebarProps {
   onLogout: () => void;
 }
 
-<<<<<<< HEAD
-=======
-const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'appointments', label: 'Appointments', icon: Calendar },
-  { id: 'consultation', label: 'Consultation', icon: Video },
-  { id: 'patients', label: 'Patient Records', icon: Users },
-  { id: 'community', label: 'Community', icon: MessageSquare },
-  { id: 'settings', label: 'Settings', icon: Settings },
-];
-
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const { t, td } = useLanguage();
+  const { t } = useLanguage();
 
   const navItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
+    { id: 'appointments', label: t('appointments'), icon: Calendar },
     { id: 'consultation', label: t('consultation'), icon: Video },
     { id: 'patients', label: t('patientRecords'), icon: Users },
+    { id: 'community', label: 'Community', icon: MessageSquare },
     { id: 'settings', label: t('settings'), icon: Settings },
   ];
 
@@ -115,16 +104,6 @@ export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSideba
         {/* Doctor Profile */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 mb-3">
-<<<<<<< HEAD
-            <img
-              src={currentDoctor.avatar}
-              alt={currentDoctor.name}
-              className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{currentDoctor.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{td(currentDoctor.specialty)}</p>
-=======
             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
               {JSON.parse(localStorage.getItem('user') || '{}')?.name?.charAt(0) || 'D'}
             </div>
@@ -135,7 +114,6 @@ export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSideba
               <p className="text-xs text-muted-foreground truncate">
                 {JSON.parse(localStorage.getItem('user') || '{}')?.specialty || 'General Physician'}
               </p>
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
             </div>
           </div>
           <button

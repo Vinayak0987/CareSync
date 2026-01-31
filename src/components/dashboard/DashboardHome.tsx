@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Sun, Moon, Bell } from 'lucide-react';
+import { Sun, Moon, Bell, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import api from '@/lib/api';
 import { VitalsCard } from './VitalsCard';
 import { NextAppointment } from './NextAppointment';
 import { MedicineChecklist } from './MedicineChecklist';
@@ -15,11 +16,6 @@ interface DashboardHomeProps {
   onNavigate: (tab: string) => void;
 }
 
-<<<<<<< HEAD
-export function DashboardHome({ onNavigate }: DashboardHomeProps) {
-  const [showCriticalAlert, setShowCriticalAlert] = useState(false);
-  const { t } = useLanguage();
-=======
 interface Vital {
   _id: string;
   type: string;
@@ -66,6 +62,7 @@ const formatTime = (dateString: string) => {
 
 export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   const [showCriticalAlert, setShowCriticalAlert] = useState(false);
+  const { t } = useLanguage();
   const [vitals, setVitals] = useState<Vital[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasChronicDisease, setHasChronicDisease] = useState(false);
@@ -105,7 +102,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   useEffect(() => {
     fetchVitals();
   }, []);
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -117,8 +113,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   const greeting = getGreeting();
   const GreetingIcon = greeting.icon;
 
-<<<<<<< HEAD
-=======
   const getRelevantVitalTypes = () => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (!user.chronicDiseases || user.chronicDiseases.length === 0) {
@@ -167,14 +161,12 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         return 'Down';
       default:
         return 'Stable';
-    }
+      }
   };
 
   const getTrendColor = (trend: string) => {
     return trend === 'stable' ? 'text-emerald-600' : 'text-amber-600';
   };
-
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -189,11 +181,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
             <span className="text-sm">{greeting.text}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-bold">
-<<<<<<< HEAD
-            {t('welcomeBack')}, <span className="gradient-text">{currentPatient.name.split(' ')[0]}</span>
-=======
-            Welcome back, <span className="gradient-text">{userData?.name?.split(' ')[0] || 'User'}</span>
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
+            {t('welcomeBack')}, <span className="gradient-text">{userData?.name?.split(' ')[0] || currentPatient.name.split(' ')[0]}</span>
           </h1>
         </div>
 
@@ -212,10 +200,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
       <div>
         <h2 className="font-display font-semibold text-lg mb-4">{t('checkYourVitals')}</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-<<<<<<< HEAD
-          {currentVitals.map((vital, index) => (
-            <VitalsCard key={vital.id} vital={vital} index={index} />
-=======
           {filteredVitals.length === 0 && !isLoading && (
             <div className="col-span-4 text-center py-8 text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
               No recent vitals recorded. Add your first reading below! 👇
@@ -256,7 +240,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
                 {vital.timestamp}
               </p>
             </motion.div>
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
           ))}
         </div>
       </div>
@@ -272,9 +255,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
       {/* Bottom Grid - Medicines and Quick Vitals */}
       <div className="grid lg:grid-cols-2 gap-6">
         <MedicineChecklist />
-<<<<<<< HEAD
-        <QuickVitalsLog onCriticalAlert={() => setShowCriticalAlert(true)} />
-=======
         {hasChronicDisease ? (
           <DiseaseVitalsLog 
             onCriticalAlert={() => setShowCriticalAlert(true)} 
@@ -283,10 +263,8 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         ) : (
           <QuickVitalsLog 
             onCriticalAlert={() => setShowCriticalAlert(true)} 
-            onLogSuccess={fetchVitals}
           />
         )}
->>>>>>> 078c66ed15c89c967b0b6deb11805a353b4c24b5
       </div>
 
       {/* Critical Alert Modal */}
