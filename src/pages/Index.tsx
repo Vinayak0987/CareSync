@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { FloatingLanguageSwitcher } from '@/components/layout/FloatingLanguageSwitcher';
 import { DashboardHome } from '@/components/dashboard/DashboardHome';
 import { AppointmentsView } from '@/components/appointments/AppointmentsView';
 import { RecordsView } from '@/components/records/RecordsView';
@@ -8,6 +9,7 @@ import { ConsultationRoom } from '@/components/consultation/ConsultationRoom';
 import { MedicalStoreView } from '@/components/store/MedicalStoreView';
 import { WellnessView } from '@/components/wellness/WellnessView';
 import { EmergencyButton } from '@/components/emergency/EmergencyGuide';
+import { PatientCommunity } from '@/components/community/PatientCommunity';
 
 interface IndexProps {
   onLogout: () => void;
@@ -30,6 +32,8 @@ const Index = ({ onLogout }: IndexProps) => {
         return <ConsultationRoom onNavigate={setActiveTab} />;
       case 'store':
         return <MedicalStoreView />;
+      case 'community':
+        return <PatientCommunity />;
       case 'wellness':
         return <WellnessView />;
       default:
@@ -40,7 +44,7 @@ const Index = ({ onLogout }: IndexProps) => {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onLogout={onLogout} />
-      
+
       <main className="flex-1 lg:ml-0 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
         <div className="max-w-6xl mx-auto">
           {renderContent()}
@@ -49,8 +53,12 @@ const Index = ({ onLogout }: IndexProps) => {
 
       {/* Floating Emergency Button - Always visible */}
       <EmergencyButton />
+      
+      {/* Floating Language Switcher - Bottom Right */}
+      <FloatingLanguageSwitcher />
     </div>
   );
 };
 
 export default Index;
+

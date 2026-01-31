@@ -87,6 +87,12 @@ const translations = {
     department: 'Department',
     enterDepartment: 'e.g. IT, HR, Finance',
     adminInfo: 'Admin Details',
+    storeName: 'Pharmacy Name',
+    enterStoreName: 'Enter pharmacy name',
+    address: 'Address',
+    enterAddress: 'Enter pharmacy address',
+    operatingHours: 'Operating Hours',
+    enterOperatingHours: 'e.g. 9 AM - 9 PM',
   },
   hi: {
     welcome: 'वापसी पर स्वागत है!',
@@ -439,7 +445,7 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
 
   const [uploadingReport, setUploadingReport] = useState(false);
 
-  const t = translations[language];
+  const t = translations[language] as any;
   const totalSignupSteps = 3;
 
   const updateSignupData = (field: string, value: any) => {
@@ -491,6 +497,9 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
 
         // Store user data
         localStorage.setItem('user', JSON.stringify(response.data));
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
         toast.success(`Welcome back, ${response.data.name}!`);
 
         // Use the role from the response, but if the user selected a different role in UI, warn them or just use response role.
@@ -524,6 +533,9 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
         const response = await api.post('/auth/register', registerData);
 
         localStorage.setItem('user', JSON.stringify(response.data));
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
         localStorage.setItem('onboardingComplete', 'true'); // They just did it
 
         toast.success('Account created successfully! 🎉');

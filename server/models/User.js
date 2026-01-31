@@ -20,6 +20,10 @@ const userSchema = mongoose.Schema(
       type: String,
       required: [true, 'Please add a password'],
     },
+    avatar: {
+      type: String,
+      default: '',
+    },
     role: {
       type: String,
       enum: ['patient', 'doctor', 'pharmacy'],
@@ -27,7 +31,7 @@ const userSchema = mongoose.Schema(
     },
     // Doctor specific fields
     specialty: { type: String },
-    experience: { type: Number },
+    experience: { type: String },
     bio: { type: String },
     licenseNumber: { type: String },
     verificationStatus: {
@@ -45,6 +49,10 @@ const userSchema = mongoose.Schema(
       phone: { type: String },
     },
     allergies: { type: String },
+<<<<<<< HEAD
+=======
+
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
     // Chronic Disease Management
     chronicDisease: {
       type: String,

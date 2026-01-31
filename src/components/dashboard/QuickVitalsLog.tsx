@@ -5,17 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-
-import api from '@/lib/api';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface QuickVitalsLogProps {
   onCriticalAlert: () => void;
+<<<<<<< HEAD
   onLogSuccess?: () => void;
   conditions?: string[];
   recommendedVitals?: string[];
 }
 
 export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [], recommendedVitals }: QuickVitalsLogProps) {
+=======
+}
+
+export function QuickVitalsLog({ onCriticalAlert }: QuickVitalsLogProps) {
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
   const [systolic, setSystolic] = useState('120');
   const [diastolic, setDiastolic] = useState('80');
   const [bloodSugar, setBloodSugar] = useState('');
@@ -23,7 +28,9 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
   const [oxygenLevel, setOxygenLevel] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const { t } = useLanguage();
 
+<<<<<<< HEAD
   // Determine visibility
   // If recommendedVitals provided (from smart analysis), use that.
   // Else fallback to conditions-based logic.
@@ -36,6 +43,9 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
   const showOxygen = recommendedVitals ? recommendedVitals.includes('oxygen') : (hasCondition('asthma') || hasCondition('respiratory') || hasCondition('lung') || hasCondition('oxygen'));
 
   const handleSubmit = async (e: React.FormEvent) => {
+=======
+  const handleSubmit = (e: React.FormEvent) => {
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -49,6 +59,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
       return;
     }
 
+<<<<<<< HEAD
     try {
       const promises = [];
 
@@ -167,8 +178,15 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
       console.error(error);
       toast.error('Failed to save vitals');
     } finally {
+=======
+    // Simulate API call
+    setTimeout(() => {
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
       setIsSubmitting(false);
-    }
+      toast.success(t('success') + ' ✅', {
+        description: `${t('bloodPressure')}: ${systolic}/${diastolic}${bloodSugar ? ` | ${t('bloodSugar')}: ${bloodSugar}` : ''}`,
+      });
+    }, 1000);
   };
 
   /* 
@@ -200,8 +218,8 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
             <Activity size={18} className="text-primary" />
           </div>
           <div>
-            <h3 className="font-display font-semibold text-lg">Check Your Vitals</h3>
-            <p className="text-xs text-muted-foreground">Enter your health numbers</p>
+            <h3 className="font-display font-semibold text-lg">{t('checkYourVitals')}</h3>
+            <p className="text-xs text-muted-foreground">{t('enterHealthNumbers')}</p>
           </div>
         </div>
         <button
@@ -221,6 +239,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
         >
           <h4 className="font-medium text-sm text-blue-800 mb-2">📖 How to measure?</h4>
           <div className="space-y-2 text-xs text-blue-700">
+<<<<<<< HEAD
             {showBP && <p><strong>Blood Pressure (BP):</strong> Use a BP monitor on your arm. Sit quietly for 5 minutes before checking.</p>}
             {showSugar && <p><strong>Blood Sugar:</strong> Use a glucometer. Best to check before breakfast (fasting) or 2 hours after eating.</p>}
             {showHeart && <p><strong>Heart Rate:</strong> Count your pulse for 60 seconds.</p>}
@@ -267,17 +286,46 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
                 Dismiss
               </Button>
             </div>
+=======
+            <p><strong>{t('bloodPressure')}:</strong> Use a BP monitor on your arm. Sit quietly for 5 minutes before checking.</p>
+            <p><strong>{t('bloodSugar')}:</strong> Use a glucometer. Best to check before breakfast (fasting) or 2 hours after eating.</p>
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
           </div>
         </motion.div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Blood Pressure Section */}
+<<<<<<< HEAD
         {showBP && (
           <div className="p-4 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl border border-rose-100">
             <div className="flex items-center gap-2 mb-3">
               <Heart size={16} className="text-rose-500" fill="currentColor" />
               <span className="font-medium text-sm">Blood Pressure (BP)</span>
+=======
+        <div className="p-4 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl border border-rose-100">
+          <div className="flex items-center gap-2 mb-3">
+            <Heart size={16} className="text-rose-500" fill="currentColor" />
+            <span className="font-medium text-sm">{t('bloodPressure')} (BP)</span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="systolic" className="text-xs text-muted-foreground flex items-center gap-1">
+                Upper Number
+                <span className="text-[10px] text-rose-400">(Systolic)</span>
+              </Label>
+              <Input
+                id="systolic"
+                type="number"
+                placeholder="120"
+                value={systolic}
+                onChange={(e) => setSystolic(e.target.value)}
+                className="h-11 text-center text-lg font-medium"
+                min={60}
+                max={250}
+              />
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -342,6 +390,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
             </div>
           )}
 
+<<<<<<< HEAD
           {/* Heart Rate */}
           {showHeart && (
             <div className="border border-border rounded-xl p-4 hover:border-emerald-200 transition-colors bg-card">
@@ -363,6 +412,31 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
               </div>
             </div>
           )}
+=======
+        {/* Blood Sugar Section */}
+        <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
+          <div className="flex items-center gap-2 mb-3">
+            <Droplet size={16} className="text-blue-500" />
+            <span className="font-medium text-sm">{t('bloodSugar')}</span>
+            <span className="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">Optional</span>
+          </div>
+          
+          <div className="space-y-1.5">
+            <Label htmlFor="bloodSugar" className="text-xs text-muted-foreground">
+              Your sugar reading (mg/dL)
+            </Label>
+            <Input
+              id="bloodSugar"
+              type="number"
+              placeholder="Example: 100 (before food) or 140 (after food)"
+              value={bloodSugar}
+              onChange={(e) => setBloodSugar(e.target.value)}
+              className="h-11"
+              min={20}
+              max={600}
+            />
+          </div>
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
 
           {/* Oxygen */}
           {showOxygen && (
@@ -396,7 +470,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
               ⚠️ High BP Alert
             </p>
             <p className="text-xs text-amber-700">
-              If your BP is above <strong>160/100</strong>, we will immediately connect you with a doctor for urgent care. Your health is our priority!
+              If your BP is above <strong>160/100</strong>, we will immediately connect you with a doctor for urgent care!
             </p>
           </div>
         </div> */}
@@ -411,7 +485,11 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
           ) : (
             <>
               <Activity size={18} className="mr-2" />
+<<<<<<< HEAD
               Save & Analyze Vitals
+=======
+              {t('save')}
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
             </>
           )}
         </Button>

@@ -1,9 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+<<<<<<< HEAD
 import { Sun, Moon, Bell, TrendingDown, TrendingUp, Minus, Activity, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+=======
+import { Sun, Moon, Bell, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import api from '@/lib/api';
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
 import { VitalsCard } from './VitalsCard';
 import { NextAppointment } from './NextAppointment';
 import { MedicineChecklist } from './MedicineChecklist';
@@ -13,8 +18,12 @@ import { AIPredictions } from './AIPredictions';
 import { CriticalAlertModal } from './CriticalAlertModal';
 import { SmartHealthSetup } from '@/components/onboarding/SmartHealthSetup';
 import { currentPatient, currentVitals, upcomingAppointments } from '@/lib/mockData';
+<<<<<<< HEAD
 
 import api from '@/lib/api';
+=======
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
 
 interface DashboardHomeProps {
   onNavigate: (tab: string) => void;
@@ -66,6 +75,7 @@ const formatTime = (dateString: string) => {
 
 export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   const [showCriticalAlert, setShowCriticalAlert] = useState(false);
+  const { t } = useLanguage();
   const [vitals, setVitals] = useState<Vital[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showSmartSetup, setShowSmartSetup] = useState(false);
@@ -119,9 +129,9 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return { text: 'Good Morning', icon: Sun };
-    if (hour < 18) return { text: 'Good Afternoon', icon: Sun };
-    return { text: 'Good Evening', icon: Moon };
+    if (hour < 12) return { text: t('goodMorning'), icon: Sun };
+    if (hour < 18) return { text: t('goodAfternoon'), icon: Sun };
+    return { text: t('goodEvening'), icon: Moon };
   };
 
   const greeting = getGreeting();
@@ -192,9 +202,15 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         return 'Falling';
       default:
         return 'Stable';
-    }
+      }
   };
 
+<<<<<<< HEAD
+=======
+  const getTrendColor = (trend: string) => {
+    return trend === 'stable' ? 'text-emerald-600' : 'text-amber-600';
+  };
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
   return (
     <div className="space-y-6 pb-20 md:pb-0 font-sans animate-in fade-in duration-500">
       {/* Header */}
@@ -209,7 +225,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
             <span className="text-sm">{greeting.text}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-bold">
-            Welcome back, <span className="gradient-text">{userData?.name?.split(' ')[0] || 'User'}</span>
+            {t('welcomeBack')}, <span className="gradient-text">{userData?.name?.split(' ')[0] || currentPatient.name.split(' ')[0]}</span>
           </h1>
         </div>
 
@@ -231,6 +247,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         </div>
       </motion.div>
 
+<<<<<<< HEAD
       {/* Mobile Smart Setup Button */}
       <div className="md:hidden">
         <Button
@@ -241,6 +258,59 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
           <Activity size={16} className="text-primary" />
           {smartVitals ? 'Update Health Profile' : 'Automate My Vitals'}
         </Button>
+=======
+      {/* Next Appointment */}
+      <NextAppointment 
+        onJoinCall={() => onNavigate('consultation')}
+      />
+
+      {/* Vitals Grid */}
+      <div>
+        <h2 className="font-display font-semibold text-lg mb-4">{t('checkYourVitals')}</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {filteredVitals.length === 0 && !isLoading && (
+            <div className="col-span-4 text-center py-8 text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
+              No recent vitals recorded. Add your first reading below! 👇
+            </div>
+          )}
+          {filteredVitals.map((vital, index) => (
+            <motion.div
+              key={vital._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-card rounded-xl p-4 border border-border shadow-sm hover:shadow-md transition-all"
+            >
+              {/* Icon and Trend */}
+              <div className="flex items-start justify-between mb-3">
+                <div className={`w-10 h-10 rounded-xl ${vitalIcons[vital.type]?.bgColor || 'bg-gray-50'} flex items-center justify-center text-xl`}>
+                  {vitalIcons[vital.type]?.icon || '📊'}
+                </div>
+                <div className={`flex items-center gap-1 text-xs font-medium ${getTrendColor(vital.trend || 'stable')}`}>
+                  {getTrendIcon(vital.trend || 'stable')}
+                  <span>{getTrendLabel(vital.trend || 'stable')}</span>
+                </div>
+              </div>
+
+              {/* Label */}
+              <p className="text-sm text-muted-foreground mb-1">
+                {vitalLabels[vital.type] || vital.type}
+              </p>
+
+              {/* Value */}
+              <p className="text-2xl font-display font-bold text-foreground">
+                {vital.value}{' '}
+                <span className="text-sm font-normal text-muted-foreground">{vital.unit}</span>
+              </p>
+
+              {/* Timestamp */}
+              <p className="text-xs text-muted-foreground mt-1">
+                {vital.timestamp}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
       </div>
 
       {/* Smart Analysis Section */}
@@ -313,6 +383,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
             conditions={currentPatient.conditions}
             recommendedVitals={smartVitals}
           />
+<<<<<<< HEAD
         </div>
 
         {/* Right Column - Appointments & Medicines */}
@@ -320,6 +391,11 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
           {/* Next Appointment */}
           <NextAppointment
             onJoinCall={() => onNavigate('consultation')}
+=======
+        ) : (
+          <QuickVitalsLog 
+            onCriticalAlert={() => setShowCriticalAlert(true)} 
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
           />
 
           {/* MedicineChecklist */}

@@ -6,9 +6,10 @@ import {
   Activity, 
   Heart, 
   Droplets,
-  Wind,
   Calendar,
   Download,
+  BarChart3,
+  
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -154,43 +155,46 @@ export function ReportsView() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-display font-bold">Health Reports</h1>
-          <p className="text-muted-foreground">Track your health trends over time</p>
-        </div>
+        <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">Health Reports</h1>
+        <p className="text-muted-foreground">Track your health trends and insights</p>
+      </motion.div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex p-1 bg-muted rounded-lg">
-            <button
-              onClick={() => setTimeRange('week')}
-              className={cn(
-                "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
-                timeRange === 'week' ? "bg-card shadow-sm" : "text-muted-foreground"
-              )}
-            >
-              Week
-            </button>
-            <button
-              onClick={() => setTimeRange('month')}
-              className={cn(
-                "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
-                timeRange === 'month' ? "bg-card shadow-sm" : "text-muted-foreground"
-              )}
-            >
-              Month
-            </button>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => toast.info('Export feature coming soon!')}
+      {/* Stats Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+      >
+        {/* Date Range Selector */}
+        <div className="flex items-center bg-muted rounded-lg p-1">
+          <button
+            onClick={() => setTimeRange('week')}
+            className={cn(
+              "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+              timeRange === 'week' ? "bg-card shadow-sm" : "text-muted-foreground"
+            )}
           >
-            <Download size={16} className="mr-2" />
-            Export
-          </Button>
+            Week
+          </button>
+          <button
+            onClick={() => setTimeRange('month')}
+            className={cn(
+              "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+              timeRange === 'month' ? "bg-card shadow-sm" : "text-muted-foreground"
+            )}
+          >
+            Month
+          </button>
         </div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => toast.info('Export feature coming soon!')}
+        >
+          <Download size={16} className="mr-2" />
+          Export
+        </Button>
       </motion.div>
 
       {/* Quick Stats */}
@@ -376,11 +380,12 @@ export function ReportsView() {
       </motion.div>
 
       {/* Health Summary */}
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-xl border border-primary/20 p-6"
+        className="bg-card rounded-xl p-6 border border-border shadow-sm"
       >
         <h3 className="font-display font-semibold text-lg mb-3">📊 Health Summary</h3>
         {vitals.length === 0 ? (

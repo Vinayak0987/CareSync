@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import DoctorIndex from "./pages/DoctorIndex";
@@ -41,91 +42,91 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
     setIsAuthenticated(false);
     setUserRole(null);
   };
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Routes>
-            {/* Public Landing Page */}
-            <Route path="/" element={<Landing />} />
+      <LanguageProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <Routes>
+              {/* Public Landing Page */}
+              <Route path="/" element={<Landing />} />
 
-            {/* Authentication - Role-specific routes */}
-            <Route
-              path="/login"
-              element={
-                isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
-              }
-            />
-            <Route
-              path="/login/patient"
-              element={
-                isAuthenticated ? <Navigate to="/patient" replace /> : <Login onLogin={handleLogin} defaultRole="patient" />
-              }
-            />
-            <Route
-              path="/login/doctor"
-              element={
-                isAuthenticated ? <Navigate to="/doctor" replace /> : <Login onLogin={handleLogin} defaultRole="doctor" />
-              }
-            />
-            <Route
-              path="/login/pharmacy"
-              element={
-                isAuthenticated ? <Navigate to="/pharmacy" replace /> : <Login onLogin={handleLogin} defaultRole="pharmacy" />
-              }
-            />
+              {/* Authentication - Role-specific routes */}
+              <Route
+                path="/login"
+                element={
+                  isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
+                }
+              />
+              <Route
+                path="/login/patient"
+                element={
+                  isAuthenticated ? <Navigate to="/patient" replace /> : <Login onLogin={handleLogin} defaultRole="patient" />
+                }
+              />
+              <Route
+                path="/login/doctor"
+                element={
+                  isAuthenticated ? <Navigate to="/doctor" replace /> : <Login onLogin={handleLogin} defaultRole="doctor" />
+                }
+              />
+              <Route
+                path="/login/pharmacy"
+                element={
+                  isAuthenticated ? <Navigate to="/pharmacy" replace /> : <Login onLogin={handleLogin} defaultRole="pharmacy" />
+                }
+              />
 
-            {/* Protected Dashboard - Routes based on role */}
-            {/* Protected Routes */}
-            <Route
-              path="/patient/*"
-              element={
-                isAuthenticated && userRole === 'patient'
-                  ? <Index onLogout={handleLogout} />
-                  : <Navigate to="/login" replace />
-              }
-            />
+              {/* Protected Routes */}
+              <Route
+                path="/patient/*"
+                element={
+                  isAuthenticated && userRole === 'patient'
+                    ? <Index onLogout={handleLogout} />
+                    : <Navigate to="/login" replace />
+                }
+              />
 
-            <Route
-              path="/doctor/*"
-              element={
-                isAuthenticated && userRole === 'doctor'
-                  ? <DoctorIndex onLogout={handleLogout} />
-                  : <Navigate to="/login" replace />
-              }
-            />
+              <Route
+                path="/doctor/*"
+                element={
+                  isAuthenticated && userRole === 'doctor'
+                    ? <DoctorIndex onLogout={handleLogout} />
+                    : <Navigate to="/login" replace />
+                }
+              />
 
-            <Route
-              path="/pharmacy/*"
-              element={
-                isAuthenticated && userRole === 'pharmacy'
-                  ? <PharmacyIndex onLogout={handleLogout} />
-                  : <Navigate to="/login" replace />
-              }
-            />
+              <Route
+                path="/pharmacy/*"
+                element={
+                  isAuthenticated && userRole === 'pharmacy'
+                    ? <PharmacyIndex onLogout={handleLogout} />
+                    : <Navigate to="/login" replace />
+                }
+              />
 
-            {/* Legacy/Convenience Redirection */}
-            <Route
-              path="/dashboard"
-              element={
-                isAuthenticated
-                  ? <Navigate to={`/${userRole}`} replace />
-                  : <Navigate to="/login" replace />
-              }
-            />
+              {/* Legacy/Convenience Redirection */}
+              <Route
+                path="/dashboard"
+                element={
+                  isAuthenticated
+                    ? <Navigate to={`/${userRole}`} replace />
+                    : <Navigate to="/login" replace />
+                }
+              />
 
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 };

@@ -1,21 +1,35 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ShoppingCart, Plus, Minus, Upload, X, Check, FileText } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Upload, X, Check, FileText, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import api from '@/lib/api';
 
 interface Product {
-  _id: string;
+  id: string;
   name: string;
   category: string;
   price: number;
   image: string;
   inStock: boolean;
-  requiresPrescription: boolean;
+  prescription: boolean;
 }
+
+const products: Product[] = [
+  { id: '1', name: 'Paracetamol 500mg', category: 'Pain Relief', price: 45, image: '💊', inStock: true, prescription: false },
+  { id: '2', name: 'Amlodipine 5mg', category: 'Heart Health', price: 120, image: '❤️', inStock: true, prescription: true },
+  { id: '3', name: 'Cetirizine 10mg', category: 'Allergy', price: 35, image: '🤧', inStock: true, prescription: false },
+  { id: '4', name: 'Metformin 500mg', category: 'Diabetes', price: 85, image: '💉', inStock: true, prescription: true },
+  { id: '5', name: 'Vitamin D3', category: 'Supplements', price: 250, image: '☀️', inStock: true, prescription: false },
+  { id: '6', name: 'Aspirin 75mg', category: 'Heart Health', price: 55, image: '❤️', inStock: false, prescription: true },
+  { id: '7', name: 'Omeprazole 20mg', category: 'Digestive', price: 95, image: '🫃', inStock: true, prescription: true },
+  { id: '8', name: 'Multivitamin Plus', category: 'Supplements', price: 320, image: '💪', inStock: true, prescription: false },
+  { id: '9', name: 'Insulin Glargine', category: 'Diabetes', price: 850, image: '💉', inStock: true, prescription: true },
+  { id: '10', name: 'Blood Pressure Monitor', category: 'Devices', price: 1299, image: '🩺', inStock: true, prescription: false },
+  { id: '11', name: 'Oximeter', category: 'Devices', price: 699, image: '📟', inStock: true, prescription: false },
+  { id: '12', name: 'Glucose Test Strips', category: 'Diabetes', price: 450, image: '🩸', inStock: true, prescription: false },
+];
 
 const categories = ['All', 'Pain Relief', 'Heart Health', 'Allergy', 'Diabetes', 'Supplements', 'Digestive', 'Devices'];
 
@@ -27,31 +41,12 @@ interface CartItem {
 export function MedicalStoreView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [prescriptionUploaded, setPrescriptionUploaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const fetchMedicines = async () => {
-      try {
-        const response = await api.get('/medicines');
-        setProducts(response.data);
-      } catch (error) {
-        console.error('Failed to fetch medicines', error);
-        toast.error('Failed to load store products');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMedicines();
-  }, []);
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -61,7 +56,7 @@ export function MedicalStoreView() {
   });
 
   const addToCart = (product: Product) => {
-    if (product.requiresPrescription && !prescriptionUploaded) {
+    if (product.prescription && !prescriptionUploaded) {
       toast.error('Prescription required', {
         description: 'Please upload a valid prescription first',
       });
@@ -70,10 +65,10 @@ export function MedicalStoreView() {
     }
 
     setCart(prev => {
-      const existing = prev.find(item => item.product._id === product._id);
+      const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
         return prev.map(item => 
-          item.product._id === product._id 
+          item.product.id === product.id 
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -86,7 +81,7 @@ export function MedicalStoreView() {
   const updateQuantity = (productId: string, delta: number) => {
     setCart(prev => 
       prev.map(item => {
-        if (item.product._id === productId) {
+        if (item.product.id === productId) {
           const newQty = item.quantity + delta;
           return newQty > 0 ? { ...item, quantity: newQty } : item;
         }
@@ -96,7 +91,7 @@ export function MedicalStoreView() {
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.product._id !== productId));
+    setCart(prev => prev.filter(item => item.product.id !== productId));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,37 +116,12 @@ export function MedicalStoreView() {
   const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const checkout = async () => {
-    try {
-      const orderItems = cart.map(item => ({
-        name: item.product.name,
-        qty: item.quantity,
-        image: item.product.image,
-        price: item.product.price,
-        product: item.product._id,
-      }));
-
-      await api.post('/orders', {
-        orderItems,
-        shippingAddress: {
-          address: '123 Main St',
-          city: 'Mumbai',
-          postalCode: '400001',
-          country: 'India',
-        },
-        paymentMethod: 'Cash',
-        totalPrice: cartTotal,
-      });
-
-      toast.success('Order placed successfully!', {
-        description: 'Your medicines will be delivered in 2-3 hours',
-      });
-      setCart([]);
-      setShowCart(false);
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to place order');
-    }
+  const checkout = () => {
+    toast.success('Order placed successfully!', {
+      description: 'Your medicines will be delivered in 2-3 hours',
+    });
+    setCart([]);
+    setShowCart(false);
   };
 
   return (
@@ -242,26 +212,19 @@ export function MedicalStoreView() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredProducts.map((product, index) => (
           <motion.div
-            key={product._id}
+            key={product.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.03 }}
             className="bg-card rounded-xl p-4 border border-border shadow-sm hover:shadow-md transition-shadow"
           >
-            <div className="mb-3">
-              {/* If it's a URL, show img tag, else emoji/text */}
-              {product.image.startsWith('http') ? (
-                  <img src={product.image} alt={product.name} className="w-full h-32 object-cover rounded-md" />
-              ) : (
-                  <div className="text-4xl">{product.image}</div>
-              )}
-            </div>
+            <div className="text-4xl mb-3">{product.image}</div>
             <div className="flex items-start justify-between mb-2">
               <div>
                 <h3 className="font-medium text-sm">{product.name}</h3>
                 <p className="text-xs text-muted-foreground">{product.category}</p>
               </div>
-              {product.requiresPrescription && (
+              {product.prescription && (
                 <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-medium rounded">
                   Rx
                 </span>
@@ -286,7 +249,7 @@ export function MedicalStoreView() {
         ))}
       </div>
 
-      {filteredProducts.length === 0 && !isLoading && (
+      {filteredProducts.length === 0 && (
         <div className="text-center py-12">
           <Search size={48} className="mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground">No products found</p>
@@ -408,35 +371,29 @@ export function MedicalStoreView() {
                   </div>
                 ) : (
                   cart.map((item) => (
-                    <div key={item.product._id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <div className="text-2xl">
-                          {item.product.image.startsWith('http') ? (
-                              <img src={item.product.image} alt={item.product.name} className="w-12 h-12 object-cover rounded-md" />
-                          ) : (
-                            item.product.image
-                          )}
-                      </div>
+                    <div key={item.product.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      <div className="text-2xl">{item.product.image}</div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{item.product.name}</p>
                         <p className="text-sm text-primary">₹{item.product.price}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => updateQuantity(item.product._id, -1)}
+                          onClick={() => updateQuantity(item.product.id, -1)}
                           className="w-7 h-7 rounded-full bg-background border border-border flex items-center justify-center hover:bg-muted"
                         >
                           <Minus size={14} />
                         </button>
                         <span className="w-6 text-center font-medium">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.product._id, 1)}
+                          onClick={() => updateQuantity(item.product.id, 1)}
                           className="w-7 h-7 rounded-full bg-background border border-border flex items-center justify-center hover:bg-muted"
                         >
                           <Plus size={14} />
                         </button>
                       </div>
                       <button
-                        onClick={() => removeFromCart(item.product._id)}
+                        onClick={() => removeFromCart(item.product.id)}
                         className="p-1.5 text-muted-foreground hover:text-red-500"
                       >
                         <X size={16} />

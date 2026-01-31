@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Home, 
-  Calendar, 
-  FileText, 
-  Video, 
-  ShoppingBag, 
+import {
+  Home,
+  Calendar,
+  FileText,
+  Video,
+  ShoppingBag,
   Heart,
   BarChart3,
   LogOut,
   Menu,
-  X
+  X,
+  MessageSquare,
+  Gamepad2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { currentPatient } from '@/lib/mockData';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface SidebarProps {
   activeTab: string;
@@ -21,18 +24,21 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
-const navItems = [
-  { id: 'home', label: 'Dashboard', icon: Home },
-  { id: 'appointments', label: 'Appointments', icon: Calendar },
-  { id: 'records', label: 'My Records', icon: FileText },
-  { id: 'reports', label: 'Reports', icon: BarChart3 },
-  { id: 'consultation', label: 'Consultation', icon: Video },
-  { id: 'store', label: 'Medical Store', icon: ShoppingBag },
-  { id: 'wellness', label: 'Wellness', icon: Heart },
-];
 
 export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { t } = useLanguage();
+
+  const navItems = [
+    { id: 'home', label: t('dashboard'), icon: Home },
+    { id: 'appointments', label: t('appointments'), icon: Calendar },
+    { id: 'records', label: t('records'), icon: FileText },
+    { id: 'reports', label: t('reports'), icon: BarChart3 },
+    { id: 'consultation', label: t('consultation'), icon: Video },
+    { id: 'store', label: t('medicalStore'), icon: ShoppingBag },
+    { id: 'wellness', label: t('wellness'), icon: Heart },
+    { id: 'community', label: 'Community', icon: MessageSquare },
+  ];
 
   return (
     <>
@@ -46,7 +52,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
 
       {/* Mobile overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-foreground/20 backdrop-blur-sm z-40"
           onClick={() => setIsMobileOpen(false)}
         />
@@ -61,7 +67,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b border-sidebar-border">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3"
@@ -96,24 +102,22 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
             ))}
           </nav>
 
-            {/* User Profile */}
+          {/* User Profile */}
           <div className="p-4 border-t border-sidebar-border">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                {JSON.parse(localStorage.getItem('user') || '{}')?.name?.charAt(0) || 'P'}
-              </div>
+              <img 
+                src={currentPatient.avatar} 
+                alt={currentPatient.name}
+                className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/20"
+              />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">
-                  {JSON.parse(localStorage.getItem('user') || '{}')?.name || 'Patient'}
-                </p>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {JSON.parse(localStorage.getItem('user') || '{}')?.role || 'Patient'}
-                </p>
+                <p className="font-medium text-sm truncate">{currentPatient.name}</p>
+                <p className="text-xs text-muted-foreground">{t('patient')}</p>
               </div>
-              <button 
+              <button
                 onClick={onLogout}
                 className="p-2 hover:bg-sidebar-accent rounded-lg transition-colors"
-                title="Logout"
+                title={t('logout')}
               >
                 <LogOut size={18} className="text-muted-foreground" />
               </button>

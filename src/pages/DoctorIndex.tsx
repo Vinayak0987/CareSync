@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { DoctorSidebar } from '@/components/doctor/DoctorSidebar';
+import { FloatingLanguageSwitcher } from '@/components/layout/FloatingLanguageSwitcher';
 import { DoctorDashboard } from '@/components/doctor/DoctorDashboard';
 import { DoctorAppointments } from '@/components/doctor/DoctorAppointments';
 import { DoctorConsultation } from '@/components/doctor/DoctorConsultation';
 import { PatientHistory } from '@/components/doctor/PatientHistory';
 import { DoctorSettings } from '@/components/doctor/DoctorSettings';
+import { DoctorCommunity } from '@/components/doctor/DoctorCommunity';
 
 // Type definition for appointment data - matches API response
 interface DoctorAppointment {
@@ -71,6 +73,8 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
         );
       case 'patients':
         return <PatientHistory />;
+      case 'community':
+        return <DoctorCommunity />;
       case 'settings':
         return <DoctorSettings />;
       default:
@@ -92,8 +96,12 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
           {renderContent()}
         </div>
       </main>
+      
+      {/* Floating Language Switcher - Bottom Right */}
+      <FloatingLanguageSwitcher />
     </div>
   );
 };
 
 export default DoctorIndex;
+

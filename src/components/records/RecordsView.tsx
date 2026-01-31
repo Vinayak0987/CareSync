@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Download, ShoppingBag, Calendar, Pill, Stethoscope } from 'lucide-react';
+import { FileText, Download, Calendar, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { Stethoscope, Pill } from 'lucide-react';
 
 interface RecordsViewProps {
   onNavigate: (tab: string) => void;
@@ -52,6 +53,8 @@ export function RecordsView({ onNavigate }: RecordsViewProps) {
     return aptDate.getFullYear() === now.getFullYear();
   }).length;
 
+  const records = [] as any[]; // Placeholder if we need mixed records
+
   const downloadPrescription = (id: string) => {
     toast.success('Prescription downloaded!', {
       description: 'PDF saved to your downloads folder',
@@ -73,8 +76,8 @@ export function RecordsView({ onNavigate }: RecordsViewProps) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">My Records</h1>
-        <p className="text-muted-foreground">View your medical history and prescriptions</p>
+        <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">Medical Records</h1>
+        <p className="text-muted-foreground">View and download your medical documents</p>
       </motion.div>
 
       {/* Summary Card */}
@@ -179,6 +182,15 @@ export function RecordsView({ onNavigate }: RecordsViewProps) {
           </p>
         </div>
       </div>
+
+      {/* Empty State */}
+      {records.length === 0 && (
+        <div className="text-center py-12">
+          <FileText size={48} className="mx-auto text-muted-foreground mb-4" />
+          <h3 className="font-medium text-lg mb-2">No records yet</h3>
+          <p className="text-muted-foreground">Your medical records will appear here</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -37,6 +37,7 @@ const updateDoctorProfile = asyncHandler(async (req, res) => {
 
     // Allow updating basic info too
     user.name = req.body.name || user.name;
+    user.avatar = req.body.avatar || user.avatar;
 
     const updatedUser = await user.save();
 
@@ -48,6 +49,7 @@ const updateDoctorProfile = asyncHandler(async (req, res) => {
       specialty: updatedUser.specialty,
       experience: updatedUser.experience,
       bio: updatedUser.bio,
+      avatar: updatedUser.avatar,
     });
   } else {
     res.status(404);

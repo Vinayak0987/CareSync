@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, Heart, Droplets, Activity, Wind } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Vital } from '@/lib/mockData';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import type { TranslationKey } from '@/lib/i18n';
 
 interface VitalsCardProps {
   vital: Vital;
@@ -16,12 +18,13 @@ const vitalIcons = {
   temperature: Activity,
 };
 
-const vitalLabels = {
-  blood_pressure: 'Blood Pressure',
-  blood_sugar: 'Blood Sugar',
-  heart_rate: 'Heart Rate',
-  oxygen: 'Oxygen Level',
-  temperature: 'Temperature',
+// Map vital types to translation keys
+const vitalLabelKeys: Record<string, TranslationKey> = {
+  blood_pressure: 'bloodPressure',
+  blood_sugar: 'bloodSugar',
+  heart_rate: 'heartRate',
+  oxygen: 'oxygenLevel',
+  temperature: 'temperature',
 };
 
 const statusColors = {
@@ -31,8 +34,13 @@ const statusColors = {
 };
 
 export function VitalsCard({ vital, index }: VitalsCardProps) {
-  const Icon = vitalIcons[vital.type];
+  const { t, td } = useLanguage();
+  const Icon = vitalIcons[vital.type as keyof typeof vitalIcons] || Activity;
   const TrendIcon = vital.trend === 'up' ? TrendingUp : vital.trend === 'down' ? TrendingDown : Minus;
+
+  // Get the translation key or fallback to a dynamic translation of the type
+  const labelKey = vitalLabelKeys[vital.type];
+  const label = labelKey ? t(labelKey) : td(vital.type.replace('_', ' '));
 
   return (
     <motion.div
@@ -55,12 +63,12 @@ export function VitalsCard({ vital, index }: VitalsCardProps) {
           vital.trend === 'stable' && "bg-muted text-muted-foreground"
         )}>
           <TrendIcon size={12} />
-          <span className="capitalize">{vital.trend}</span>
+          <span className="capitalize">{td(vital.trend)}</span>
         </div>
       </div>
 
       <div className="space-y-1">
-        <p className="text-xs text-muted-foreground">{vitalLabels[vital.type]}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
         <div className="flex items-baseline gap-1.5">
           <span className="text-2xl font-display font-bold">{vital.value}</span>
           <span className="text-sm text-muted-foreground">{vital.unit}</span>

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { FloatingLanguageSwitcher } from '@/components/layout/FloatingLanguageSwitcher';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { ProductsManager } from '@/components/admin/ProductsManager';
 import { OrdersManager } from '@/components/admin/OrdersManager';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface AdminIndexProps {
   onLogout: () => void;
@@ -10,6 +12,7 @@ interface AdminIndexProps {
 
 const AdminIndex = ({ onLogout }: AdminIndexProps) => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const { t } = useLanguage();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -22,7 +25,7 @@ const AdminIndex = ({ onLogout }: AdminIndexProps) => {
       case 'settings':
         return (
           <div className="bg-card rounded-xl border border-border p-8">
-            <h1 className="text-2xl font-display font-bold mb-4">Settings</h1>
+            <h1 className="text-2xl font-display font-bold mb-4">{t('settings')}</h1>
             <p className="text-muted-foreground">Admin settings page coming soon...</p>
           </div>
         );
@@ -40,8 +43,12 @@ const AdminIndex = ({ onLogout }: AdminIndexProps) => {
           {renderContent()}
         </div>
       </main>
+      
+      {/* Floating Language Switcher - Bottom Right */}
+      <FloatingLanguageSwitcher />
     </div>
   );
 };
 
 export default AdminIndex;
+

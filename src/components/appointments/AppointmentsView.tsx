@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, Star, ChevronLeft, ChevronRight, Search, Filter, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,37 +7,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { cn } from '@/lib/utils';
-// import { doctors, availableTimeSlots, type Doctor } from '@/lib/mockData';
-import { availableTimeSlots } from '@/lib/mockData'; // Keep timeslots mock for now or move to backend config
+import { doctors, availableTimeSlots, type Doctor } from '@/lib/mockData';
 import { toast } from 'sonner';
-import api from '@/lib/api';
-
-interface Doctor {
-  _id: string;
-  name: string;
-  specialty: string;
-  role: string;
-  avatar?: string;
-  rating?: number;
-  experience?: number;
-  // available?: boolean; // dynamic from backend logic later
-}
+import { useLanguage } from '@/lib/i18n';
 
 interface AppointmentsViewProps {
   onNavigate: (tab: string) => void;
 }
 
 export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
+  const { t, td, language } = useLanguage();
   const [specialty, setSpecialty] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
+<<<<<<< HEAD
   const [isBooking, setIsBooking] = useState(false);
 
   // Track booked appointments - map of doctorId to appointment details
@@ -95,6 +83,8 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
       setIsLoading(false);
     }
   };
+=======
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
 
   // Generate calendar dates
   const today = new Date();
@@ -104,10 +94,27 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
     return date;
   });
 
+  // Get locale for date formatting based on language
+  const getLocale = () => {
+    const localeMap: Record<string, string> = {
+      en: 'en-US',
+      hi: 'hi-IN',
+      mr: 'mr-IN',
+      ta: 'ta-IN',
+      te: 'te-IN',
+      bn: 'bn-IN',
+    };
+    return localeMap[language] || 'en-US';
+  };
+
   const filteredDoctors = doctors.filter(doc => {
-    const matchesSpecialty = specialty === 'all' || (doc.specialty && doc.specialty.toLowerCase().includes(specialty.toLowerCase()));
+    const matchesSpecialty = specialty === 'all' || doc.specialty.toLowerCase().includes(specialty.toLowerCase());
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+<<<<<<< HEAD
       (doc.specialty && doc.specialty.toLowerCase().includes(searchQuery.toLowerCase()));
+=======
+                          doc.specialty.toLowerCase().includes(searchQuery.toLowerCase());
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
     return matchesSpecialty && matchesSearch;
   });
 
@@ -116,6 +123,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
     setShowBookingModal(true);
   };
 
+<<<<<<< HEAD
   const confirmBooking = async () => {
     if (!selectedDate || !selectedTime || !selectedDoctor) return;
 
@@ -165,7 +173,33 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
     } finally {
       setIsBooking(false);
     }
+=======
+  const confirmBooking = () => {
+    if (!selectedDate || !selectedTime) return;
+    
+    setBookingConfirmed(true);
+    setTimeout(() => {
+      setShowBookingModal(false);
+      setBookingConfirmed(false);
+      setSelectedDoctor(null);
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setReason('');
+      toast.success(t('bookingConfirmed' as any) || 'Appointment booked successfully!', {
+        description: `${selectedDoctor?.name} - ${dates[selectedDate].toLocaleDateString(getLocale())} ${selectedTime}`,
+      });
+    }, 2000);
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
   };
+
+  // Specialty options with translations
+  const specialtyOptions = [
+    { value: 'all', labelKey: 'allSpecialties' },
+    { value: 'cardiology', labelKey: 'cardiology' },
+    { value: 'general', labelKey: 'generalMedicine' },
+    { value: 'orthopedics', labelKey: 'orthopedics' },
+    { value: 'neurology', labelKey: 'neurology' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -174,8 +208,8 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">Book Appointment</h1>
-        <p className="text-muted-foreground">Find and book consultations with our specialists</p>
+        <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">{t('bookAppointment')}</h1>
+        <p className="text-muted-foreground">{t('findAndBook' as any) || 'Find and book consultations with our specialists'}</p>
       </motion.div>
 
       {/* Filters */}
@@ -187,7 +221,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search doctors..."
+            placeholder={t('searchDoctors' as any) || 'Search doctors...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -196,14 +230,14 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
         <Select value={specialty} onValueChange={setSpecialty}>
           <SelectTrigger className="w-full sm:w-48">
             <Filter size={16} className="mr-2" />
-            <SelectValue placeholder="Specialty" />
+            <SelectValue placeholder={t('allSpecialties' as any)} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Specialties</SelectItem>
-            <SelectItem value="cardiology">Cardiology</SelectItem>
-            <SelectItem value="general">General Medicine</SelectItem>
-            <SelectItem value="orthopedics">Orthopedics</SelectItem>
-            <SelectItem value="neurology">Neurology</SelectItem>
+            {specialtyOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {t(opt.labelKey as any) || opt.labelKey}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </motion.div>
@@ -212,23 +246,30 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
       <div className="grid gap-4">
         {filteredDoctors.map((doctor, index) => (
           <motion.div
-            key={doctor._id}
+            key={doctor.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             className="vitals-card"
           >
             <div className="flex flex-col sm:flex-row gap-4">
+<<<<<<< HEAD
               <UserAvatar
                 name={doctor.name}
                 avatar={doctor.avatar}
                 size="xl"
+=======
+              <img
+                src={doctor.avatar}
+                alt={doctor.name}
+                className="w-20 h-20 rounded-xl object-cover ring-2 ring-primary/10"
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
               />
               <div className="flex-1">
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
                   <div>
                     <h3 className="font-display font-semibold text-lg">{doctor.name}</h3>
-                    <p className="text-primary text-sm font-medium">{doctor.specialty}</p>
+                    <p className="text-primary text-sm font-medium">{td(doctor.specialty)}</p>
                   </div>
                   <div className="flex items-center gap-1 px-2 py-1 bg-warning/10 rounded-full">
                     <Star size={14} className="text-warning fill-warning" />
@@ -236,9 +277,10 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground mb-3">
-                  {doctor.experience} years experience
+                  {doctor.experience} {td('years experience')}
                 </p>
                 <div className="flex flex-wrap items-center justify-center sm:justify-between gap-3 mt-4 pt-3 border-t border-border/50">
+<<<<<<< HEAD
                   {bookedAppointments[doctor._id] ? (
                     // Show booked status and action buttons
                     <div className="w-full space-y-3">
@@ -337,6 +379,29 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                       </Button>
                     </>
                   )}
+=======
+                  {doctor.available ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success/10 text-success text-xs font-medium rounded-full">
+                      <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
+                      {td('available now')}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
+                      {t('nextAvailableAt' as any) || 'Next available:'} {doctor.nextAvailable}
+                    </span>
+                  )}
+                  <Button 
+                    onClick={() => handleBook(doctor)}
+                    size="sm"
+                    className={cn(
+                      "w-full sm:w-auto min-w-[140px]",
+                      doctor.available ? 'btn-hero text-sm py-2' : ''
+                    )}
+                    variant={doctor.available ? 'default' : 'outline'}
+                  >
+                    {t('bookAppointment')}
+                  </Button>
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
                 </div>
               </div>
             </div>
@@ -385,6 +450,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                   >
                     <Check size={40} className="text-success-foreground" />
                   </motion.div>
+<<<<<<< HEAD
 
                   <h2 className="font-display font-bold text-2xl mb-2 text-center">Appointment Booked!</h2>
                   <p className="text-muted-foreground text-center mb-6">
@@ -476,20 +542,31 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                       Cancel Appointment
                     </Button>
                   </div>
+=======
+                  <h2 className="font-display font-bold text-2xl mb-2">{t('bookingConfirmed' as any) || 'Booking Confirmed!'}</h2>
+                  <p className="text-muted-foreground">{t('appointmentScheduled' as any) || 'Your appointment has been scheduled'}</p>
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
                 </div>
               ) : (
                 <>
                   <div className="p-6 border-b border-border">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
+<<<<<<< HEAD
                         <UserAvatar
                           name={selectedDoctor.name}
                           avatar={selectedDoctor.avatar}
                           size="md"
+=======
+                        <img
+                          src={selectedDoctor.avatar}
+                          alt={selectedDoctor.name}
+                          className="w-12 h-12 rounded-xl object-cover"
+>>>>>>> 60c72ca4a7d0c757f60e62feb6bfebc01a893d72
                         />
                         <div>
                           <h2 className="font-display font-semibold">{selectedDoctor.name}</h2>
-                          <p className="text-sm text-primary">{selectedDoctor.specialty}</p>
+                          <p className="text-sm text-primary">{td(selectedDoctor.specialty)}</p>
                         </div>
                       </div>
                       <button
@@ -506,7 +583,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                     <div>
                       <h3 className="font-medium mb-3 flex items-center gap-2">
                         <Calendar size={18} className="text-primary" />
-                        Select Date
+                        {t('selectDate' as any) || 'Select Date'}
                       </h3>
                       <div className="flex gap-2 overflow-x-auto pb-2">
                         {dates.slice(0, 7).map((date, idx) => (
@@ -521,7 +598,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                             )}
                           >
                             <p className="text-xs opacity-70">
-                              {date.toLocaleDateString('en', { weekday: 'short' })}
+                              {date.toLocaleDateString(getLocale(), { weekday: 'short' })}
                             </p>
                             <p className="font-display font-bold text-lg">
                               {date.getDate()}
@@ -535,7 +612,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                     <div>
                       <h3 className="font-medium mb-3 flex items-center gap-2">
                         <Clock size={18} className="text-primary" />
-                        Select Time
+                        {t('selectTime' as any) || 'Select Time'}
                       </h3>
                       <div className="grid grid-cols-3 gap-2">
                         {availableTimeSlots.map((slot) => (
@@ -557,9 +634,9 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
 
                     {/* Reason */}
                     <div>
-                      <h3 className="font-medium mb-3">Reason for Visit</h3>
+                      <h3 className="font-medium mb-3">{t('reasonForVisit' as any) || 'Reason for Visit'}</h3>
                       <Textarea
-                        placeholder="Describe your symptoms or reason for consultation..."
+                        placeholder={t('describeSymptomsPlaceholder' as any) || 'Describe your symptoms or reason for consultation...'}
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
                         rows={3}
@@ -571,7 +648,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                       disabled={!selectedDate || !selectedTime}
                       className="w-full btn-hero h-12"
                     >
-                      Confirm Booking
+                      {t('confirmBooking' as any) || 'Confirm Booking'}
                     </Button>
                   </div>
                 </>
