@@ -34,6 +34,7 @@ app.use('/api/appointments', require('./routes/appointmentRoutes'));
 app.use('/api/vitals', require('./routes/vitalRoutes'));
 app.use('/api/medicines', require('./routes/medicineRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
 
 // Upload Report Endpoint
 app.post('/api/upload-report', upload.single('report'), async (req, res) => {

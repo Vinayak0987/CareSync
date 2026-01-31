@@ -19,13 +19,6 @@ const PharmacyIndex = ({ onLogout }: PharmacyIndexProps) => {
                 return <ProductsManager />;
             case 'orders':
                 return <OrdersManager />;
-            case 'settings':
-                return (
-                    <div className="bg-card rounded-xl border border-border p-8">
-                        <h1 className="text-2xl font-display font-bold mb-4">Settings</h1>
-                        <p className="text-muted-foreground">Pharmacy settings page coming soon...</p>
-                    </div>
-                );
             default:
                 return <PharmacyDashboard onNavigate={setActiveTab} />;
         }
@@ -35,7 +28,7 @@ const PharmacyIndex = ({ onLogout }: PharmacyIndexProps) => {
         <div className="flex min-h-screen bg-background">
             <PharmacySidebar activeTab={activeTab} onTabChange={setActiveTab} onLogout={onLogout} />
 
-            <main className="flex-1 lg:ml-0 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
+            <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 min-h-screen">
                 <div className="max-w-6xl mx-auto">
                     {renderContent()}
                 </div>

@@ -8,7 +8,8 @@ import {
   LogOut,
   Menu,
   X,
-  Stethoscope
+  Stethoscope,
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { currentDoctor } from '@/lib/mockData';
@@ -21,6 +22,7 @@ interface DoctorSidebarProps {
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'appointments', label: 'Appointments', icon: Calendar },
   { id: 'consultation', label: 'Consultation', icon: Video },
   { id: 'patients', label: 'Patient Records', icon: Users },
   { id: 'settings', label: 'Settings', icon: Settings },

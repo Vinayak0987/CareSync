@@ -3,8 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone,
-  Stethoscope, Users, Pill, Globe, Calendar, Droplet, CheckCircle, Shield
+  Stethoscope, Users, Pill, Globe, Calendar, Droplet, CheckCircle, Shield,
+  FileText, Upload
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -416,6 +424,8 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
     allergies: '',
     emergencyName: '',
     emergencyPhone: '',
+    chronicDiseases: '',
+    medicalReport: null as string | null,
     licenseNumber: '',
     specialty: '',
     experience: '',
@@ -427,13 +437,15 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
     operatingHours: '',
   });
 
+  const [uploadingReport, setUploadingReport] = useState(false);
+
   const t = translations[language];
   const totalSignupSteps = 3;
 
-  const updateSignupData = (field: string, value: string) => {
+  const updateSignupData = (field: string, value: any) => {
     if (field === 'phone' || field === 'emergencyPhone') {
       // Only allow numbers and max 10 digits
-      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      const numericValue = String(value).replace(/\D/g, '').slice(0, 10);
       setSignupData({ ...signupData, [field]: numericValue });
     } else {
       setSignupData({ ...signupData, [field]: value });
@@ -500,7 +512,9 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
             name: signupData.emergencyName,
             phone: signupData.emergencyPhone
           },
-          // Doctor fields
+          chronicDiseases: signupData.chronicDiseases ? [signupData.chronicDiseases] : [],
+          medicalReport: signupData.medicalReport || undefined,
+          // Doctor fields (if applicable)
           licenseNumber: signupData.licenseNumber,
           specialty: signupData.specialty,
           experience: signupData.experience,
@@ -951,6 +965,80 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                       onChange={(e) => updateSignupData('allergies', e.target.value)}
                       className="h-12"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Chronic Diseases</Label>
+                    <Select
+                      onValueChange={(value) => updateSignupData('chronicDiseases', value)}
+                      value={signupData.chronicDiseases}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Select any chronic condition" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="diabetes">Diabetes</SelectItem>
+                        <SelectItem value="heart_diseases">Heart Diseases</SelectItem>
+                        <SelectItem value="hypertension">Hypertension</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Upload Medical Report <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                    <div className="border-2 border-dashed border-border rounded-xl p-4 hover:bg-muted/30 transition-colors">
+                      <input
+                        type="file"
+                        id="medical-report"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setUploadingReport(true);
+                            const formData = new FormData();
+                            formData.append('report', file);
+
+                            try {
+                              toast.info("Uploading and processing report...");
+                              const res = await api.post('/reports/upload', formData, {
+                                headers: { 'Content-Type': 'multipart/form-data' }
+                              });
+
+                              updateSignupData('medicalReport', res.data.txtFilePath);
+                              toast.success("Report processed! Vital data extracted.");
+                              console.log("Extracted Text:", res.data.text);
+                            } catch (error) {
+                              console.error(error);
+                              toast.error("Failed to process report");
+                            } finally {
+                              setUploadingReport(false);
+                            }
+                          }
+                        }}
+                      />
+                      <label htmlFor="medical-report" className="cursor-pointer flex flex-col items-center gap-2">
+                        {uploadingReport ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                            <span className="text-xs text-muted-foreground">Extracting data...</span>
+                          </div>
+                        ) : signupData.medicalReport ? (
+                          <div className="flex items-center gap-2 text-primary font-medium">
+                            <FileText size={20} />
+                            <span className="text-sm">Report Uploaded & Analyzed</span>
+                          </div>
+                        ) : (
+                          <>
+                            <Upload size={24} className="text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground font-medium">Click to upload report</span>
+                            <span className="text-xs text-muted-foreground">PDF, JPG, PNG (Max 5MB)</span>
+                          </>
+                        )}
+                      </label>
+                    </div>
                   </div>
                 </motion.div>
               )}

@@ -1,15 +1,62 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Appointment } from '@/lib/mockData';
-import { doctors } from '@/lib/mockData';
+import api from '@/lib/api';
+
+interface Appointment {
+  _id: string;
+  doctorId: any;
+  date: string;
+  time: string;
+  reason?: string;
+  status: string;
+}
 
 interface NextAppointmentProps {
-  appointment: Appointment | undefined;
   onJoinCall: () => void;
 }
 
-export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProps) {
+export function NextAppointment({ onJoinCall }: NextAppointmentProps) {
+  const [appointment, setAppointment] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNextAppointment = async () => {
+      try {
+        const response = await api.get('/appointments');
+        const appointments = response.data;
+        
+        // Find next upcoming appointment
+        const upcoming = appointments
+          .filter((apt: Appointment) => apt.status === 'pending')
+          .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+        
+        setAppointment(upcoming);
+      } catch (error) {
+        console.error('Failed to fetch appointments', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNextAppointment();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-card rounded-xl p-6 border border-border shadow-sm"
+      >
+        <div className="flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      </motion.div>
+    );
+  }
+
   if (!appointment) {
     return (
       <motion.div
@@ -22,8 +69,13 @@ export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProp
     );
   }
 
-  // Find doctor details
-  const doctor = doctors.find(d => d.id === appointment.doctorId);
+  // Format date
+  const appointmentDate = new Date(appointment.date);
+  const formattedDate = appointmentDate.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  });
 
   return (
     <motion.div
@@ -35,9 +87,15 @@ export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProp
         {/* Top Section: Avatar & Info */}
         <div className="flex items-start gap-4">
           <img
+<<<<<<< HEAD
             src={doctor?.avatar || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face'}
             alt={appointment.doctorName}
             className="w-14 h-14 rounded-xl object-cover ring-2 ring-primary/10 flex-shrink-0"
+=======
+            src={appointment.doctorId?.avatar || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face'}
+            alt={appointment.doctorId?.name || 'Doctor'}
+            className="w-16 h-16 rounded-xl object-cover ring-2 ring-primary/10"
+>>>>>>> 738d57f630b902745335002f5776a466e48bb78e
           />
 
           <div className="min-w-0">
@@ -49,6 +107,7 @@ export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProp
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* Reason (if exists) */}
         {appointment.reason && (
           <div className="text-sm text-muted-foreground bg-muted/40 p-3 rounded-lg border border-border/50">
@@ -63,6 +122,29 @@ export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProp
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar size={14} />
               <span className="font-medium text-foreground">{appointment.date}</span>
+=======
+        {/* Appointment Details */}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground mb-0.5">Next Appointment</p>
+          <h3 className="font-display font-semibold text-lg text-foreground">
+            Dr. {appointment.doctorId?.name || 'Unknown'}
+          </h3>
+          <p className="text-sm text-primary font-medium">{appointment.doctorId?.specialty || 'General'}</p>
+          
+          {appointment.reason && (
+            <p className="text-sm text-muted-foreground mt-2">
+              <span className="font-medium text-foreground">Reason:</span> {appointment.reason}
+            </p>
+          )}
+        </div>
+
+        {/* Time and Action */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Calendar size={16} />
+              <span className="font-medium text-foreground">{formattedDate}</span>
+>>>>>>> 738d57f630b902745335002f5776a466e48bb78e
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock size={14} />

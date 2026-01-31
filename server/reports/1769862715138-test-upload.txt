@@ -1,0 +1,18 @@
+Medical Report Analysis
+    
+Patient Information:
+- Name: [Extracted from report]
+- Date: [Extracted from report]
+
+Vital Signs:
+- Blood Pressure: 120/80 mmHg
+- Heart Rate: 72 bpm
+- Temperature: 98.6°F
+- Blood Sugar: 95 mg/dL
+
+Diagnosis:
+[This would be extracted via OCR in production]
+
+Notes:
+This is a placeholder text. In production, this would be actual OCR-extracted content.
+Uploaded file: 1769862715138-test-upload.png

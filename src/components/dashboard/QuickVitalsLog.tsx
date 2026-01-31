@@ -342,6 +342,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
             </div>
           )}
 
+<<<<<<< HEAD
           {/* Heart Rate */}
           {showHeart && (
             <div className="border border-border rounded-xl p-4 hover:border-emerald-200 transition-colors bg-card">
@@ -386,6 +387,22 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess, conditions = [],
             </div>
           )}
         </div>
+=======
+        {/* Important Warning */}
+        {/* <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <AlertTriangle size={16} className="text-amber-600" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 mb-1">
+              ⚠️ High BP Alert
+            </p>
+            <p className="text-xs text-amber-700">
+              If your BP is above <strong>160/100</strong>, we will immediately connect you with a doctor for urgent care. Your health is our priority!
+            </p>
+          </div>
+        </div> */}
+>>>>>>> 738d57f630b902745335002f5776a466e48bb78e
 
         {/* Submit Button */}
         <Button

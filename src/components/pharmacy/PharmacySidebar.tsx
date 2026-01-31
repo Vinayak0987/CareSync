@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
-  Settings,
   LogOut,
   Menu,
   X,
@@ -22,7 +21,6 @@ const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'products', label: 'Products', icon: Package },
   { id: 'orders', label: 'Orders', icon: ShoppingCart },
-  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export function PharmacySidebar({ activeTab, onTabChange, onLogout }: PharmacySidebarProps) {
@@ -49,7 +47,7 @@ export function PharmacySidebar({ activeTab, onTabChange, onLogout }: PharmacySi
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 w-64 bg-card border-r border-border z-40 flex flex-col transition-transform duration-300",
+          "fixed inset-y-0 left-0 w-64 h-screen bg-card border-r border-border z-40 flex flex-col transition-transform duration-300 overflow-y-auto",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
