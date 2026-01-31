@@ -12,16 +12,164 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import {
-  inventoryProducts,
-  patientOrders,
-  stockAlerts,
-  type PatientOrder
-} from '@/lib/mockData';
+import { type PatientOrder, type InventoryProduct } from '@/lib/mockData';
 
 interface PharmacyDashboardProps {
   onNavigate: (tab: string) => void;
 }
+
+// Pharmacy Products Data
+const inventoryProducts: InventoryProduct[] = [
+  { id: 'inv-001', name: 'Paracetamol 500mg', category: 'Pain Relief', price: 45, stock: 250, minStock: 50, status: 'in-stock', image: '💊', prescription: false, supplier: 'Cipla', lastRestocked: '2026-01-28' },
+  { id: 'inv-002', name: 'Amlodipine 5mg', category: 'Heart Health', price: 120, stock: 85, minStock: 30, status: 'in-stock', image: '❤️', prescription: true, supplier: 'Sun Pharma', lastRestocked: '2026-01-25' },
+  { id: 'inv-003', name: 'Insulin Glargine', category: 'Diabetes', price: 850, stock: 8, minStock: 15, status: 'low-stock', image: '💉', prescription: true, supplier: 'Novo Nordisk', lastRestocked: '2026-01-20' },
+  { id: 'inv-004', name: 'Metformin 500mg', category: 'Diabetes', price: 85, stock: 120, minStock: 40, status: 'in-stock', image: '💊', prescription: true, supplier: "Dr. Reddy's", lastRestocked: '2026-01-27' },
+  { id: 'inv-005', name: 'Cetirizine 10mg', category: 'Allergy', price: 35, stock: 0, minStock: 25, status: 'out-of-stock', image: '🤧', prescription: false, supplier: 'Cipla', lastRestocked: '2026-01-15' },
+  { id: 'inv-006', name: 'Omeprazole 20mg', category: 'Digestive', price: 95, stock: 65, minStock: 20, status: 'in-stock', image: '💊', prescription: true, supplier: 'Lupin', lastRestocked: '2026-01-26' },
+  { id: 'inv-007', name: 'Aspirin 75mg', category: 'Heart Health', price: 55, stock: 12, minStock: 25, status: 'low-stock', image: '❤️', prescription: true, supplier: 'Bayer', lastRestocked: '2026-01-22' },
+  { id: 'inv-008', name: 'Vitamin D3 1000IU', category: 'Supplements', price: 250, stock: 180, minStock: 30, status: 'in-stock', image: '☀️', prescription: false, supplier: 'HealthKart', lastRestocked: '2026-01-29' },
+  { id: 'inv-009', name: 'Blood Pressure Monitor', category: 'Devices', price: 1299, stock: 15, minStock: 5, status: 'in-stock', image: '🩺', prescription: false, supplier: 'Omron', lastRestocked: '2026-01-24' },
+  { id: 'inv-010', name: 'Glucose Test Strips', category: 'Diabetes', price: 450, stock: 5, minStock: 20, status: 'low-stock', image: '🩸', prescription: false, supplier: 'Accu-Chek', lastRestocked: '2026-01-18' },
+  { id: 'inv-011', name: 'Azithromycin 500mg', category: 'Antibiotics', price: 180, stock: 75, minStock: 25, status: 'in-stock', image: '💊', prescription: true, supplier: 'Zydus', lastRestocked: '2026-01-30' },
+  { id: 'inv-012', name: 'Pantoprazole 40mg', category: 'Digestive', price: 110, stock: 90, minStock: 30, status: 'in-stock', image: '💊', prescription: true, supplier: 'Alkem', lastRestocked: '2026-01-28' },
+  { id: 'inv-013', name: 'Multivitamin Tablets', category: 'Supplements', price: 320, stock: 200, minStock: 40, status: 'in-stock', image: '💪', prescription: false, supplier: 'Himalaya', lastRestocked: '2026-01-31' },
+  { id: 'inv-014', name: 'Ibuprofen 400mg', category: 'Pain Relief', price: 60, stock: 3, minStock: 30, status: 'low-stock', image: '💊', prescription: false, supplier: 'Abbott', lastRestocked: '2026-01-10' },
+  { id: 'inv-015', name: 'Digital Thermometer', category: 'Devices', price: 299, stock: 25, minStock: 10, status: 'in-stock', image: '🌡️', prescription: false, supplier: 'Dr. Trust', lastRestocked: '2026-01-27' },
+];
+
+// Patient Orders Data
+const patientOrders: PatientOrder[] = [
+  {
+    id: 'ORD-2026-001',
+    patientName: 'Ravi Kumar',
+    patientAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Amlodipine 5mg', quantity: 2, price: 120 },
+      { name: 'Metformin 500mg', quantity: 1, price: 85 },
+    ],
+    total: 325,
+    status: 'pending',
+    prescription: true,
+    prescriptionVerified: true,
+    orderDate: '31 Jan 2026, 10:30 AM',
+    deliveryAddress: 'Andheri West, Mumbai',
+  },
+  {
+    id: 'ORD-2026-002',
+    patientName: 'Priya Sharma',
+    patientAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Vitamin D3 1000IU', quantity: 1, price: 250 },
+      { name: 'Multivitamin Tablets', quantity: 1, price: 320 },
+    ],
+    total: 570,
+    status: 'processing',
+    prescription: false,
+    prescriptionVerified: false,
+    orderDate: '31 Jan 2026, 09:15 AM',
+    deliveryAddress: 'Koregaon Park, Pune',
+  },
+  {
+    id: 'ORD-2026-003',
+    patientName: 'Amit Patel',
+    patientAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Insulin Glargine', quantity: 1, price: 850 },
+      { name: 'Glucose Test Strips', quantity: 2, price: 450 },
+    ],
+    total: 1750,
+    status: 'dispatched',
+    prescription: true,
+    prescriptionVerified: true,
+    orderDate: '30 Jan 2026, 04:45 PM',
+    deliveryAddress: 'Satellite, Ahmedabad',
+  },
+  {
+    id: 'ORD-2026-004',
+    patientName: 'Sneha Reddy',
+    patientAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Paracetamol 500mg', quantity: 3, price: 45 },
+      { name: 'Cetirizine 10mg', quantity: 1, price: 35 },
+    ],
+    total: 170,
+    status: 'delivered',
+    prescription: false,
+    prescriptionVerified: false,
+    orderDate: '29 Jan 2026, 11:00 AM',
+    deliveryAddress: 'Banjara Hills, Hyderabad',
+  },
+  {
+    id: 'ORD-2026-005',
+    patientName: 'Vikram Singh',
+    patientAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Blood Pressure Monitor', quantity: 1, price: 1299 },
+    ],
+    total: 1299,
+    status: 'pending',
+    prescription: false,
+    prescriptionVerified: false,
+    orderDate: '31 Jan 2026, 11:20 AM',
+    deliveryAddress: 'Indiranagar, Bangalore',
+  },
+  {
+    id: 'ORD-2026-006',
+    patientName: 'Meera Nair',
+    patientAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Azithromycin 500mg', quantity: 1, price: 180 },
+      { name: 'Pantoprazole 40mg', quantity: 1, price: 110 },
+    ],
+    total: 290,
+    status: 'processing',
+    prescription: true,
+    prescriptionVerified: true,
+    orderDate: '31 Jan 2026, 08:45 AM',
+    deliveryAddress: 'MG Road, Kochi',
+  },
+  {
+    id: 'ORD-2026-007',
+    patientName: 'Arjun Mehta',
+    patientAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Omeprazole 20mg', quantity: 2, price: 95 },
+      { name: 'Digital Thermometer', quantity: 1, price: 299 },
+    ],
+    total: 489,
+    status: 'delivered',
+    prescription: true,
+    prescriptionVerified: true,
+    orderDate: '28 Jan 2026, 02:30 PM',
+    deliveryAddress: 'Connaught Place, Delhi',
+  },
+  {
+    id: 'ORD-2026-008',
+    patientName: 'Kavita Desai',
+    patientAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
+    items: [
+      { name: 'Aspirin 75mg', quantity: 1, price: 55 },
+      { name: 'Amlodipine 5mg', quantity: 1, price: 120 },
+    ],
+    total: 175,
+    status: 'cancelled',
+    prescription: true,
+    prescriptionVerified: false,
+    orderDate: '27 Jan 2026, 05:00 PM',
+    deliveryAddress: 'Viman Nagar, Pune',
+  },
+];
+
+// Auto-generate stock alerts from low/out of stock products
+const stockAlerts = inventoryProducts
+  .filter(p => p.status === 'low-stock' || p.status === 'out-of-stock')
+  .map(p => ({
+    id: p.id,
+    name: p.name,
+    stock: p.stock,
+    minStock: p.minStock,
+    status: p.status,
+  }));
 
 export function PharmacyDashboard({ onNavigate }: PharmacyDashboardProps) {
   const totalProducts = inventoryProducts.length;
