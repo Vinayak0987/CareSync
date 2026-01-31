@@ -22,6 +22,12 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error('User already exists');
   }
 
+  // Check if doctor provides license number
+  if (role === 'doctor' && !otherDetails.licenseNumber) {
+    res.status(400);
+    throw new Error('License number is required for doctors');
+  }
+
   // Create user
   const user = await User.create({
     name,
@@ -82,8 +88,64 @@ const generateToken = (id) => {
   });
 };
 
+// @desc    Update user health profile (vitals & chronic info)
+// @route   PUT /api/auth/profile/health
+// @access  Private
+const updateHealthProfile = asyncHandler(async (req, res) => {
+  try {
+    const user = req.user; // Already fetched by protect middleware
+
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    console.log('Improving Health Profile for:', user.email);
+    console.log('Payload:', req.body);
+
+    // Update fields if present
+    if (req.body.chronicDisease) user.chronicDisease = req.body.chronicDisease;
+
+    if (req.body.monitoringConfig) {
+      // Ensure arrays
+      user.monitoringConfig = Array.isArray(req.body.monitoringConfig)
+        ? req.body.monitoringConfig
+        : [req.body.monitoringConfig];
+    }
+
+    // Merge health profile data safely
+    if (req.body.healthProfile) {
+      // Handle case where healthProfile might be null/undefined in DB
+      // If it's a Mongoose subdocument, toObject() helps merge.
+      const currentProfile = user.healthProfile && typeof user.healthProfile.toObject === 'function'
+        ? user.healthProfile.toObject()
+        : (user.healthProfile || {});
+
+      user.healthProfile = { ...currentProfile, ...req.body.healthProfile };
+    }
+
+    const updatedUser = await user.save();
+    console.log('User saved successfully');
+
+    res.status(200).json({
+      _id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      chronicDisease: updatedUser.chronicDisease,
+      monitoringConfig: updatedUser.monitoringConfig,
+      healthProfile: updatedUser.healthProfile
+    });
+  } catch (error) {
+    console.error('Error updating health profile:', error);
+    res.status(500);
+    throw new Error(error.message); // Pass to error handler
+  }
+});
+
 module.exports = {
   registerUser,
   loginUser,
   getMe,
+  updateHealthProfile
 };

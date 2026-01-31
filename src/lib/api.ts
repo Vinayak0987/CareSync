@@ -1,35 +1,37 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
+// Create axios instance with default config
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add a request interceptor to add the auth token to requests
+// Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      const { token } = JSON.parse(user);
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
+// Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      if (localStorage.getItem('user')) {
-        localStorage.removeItem('user');
+    if (error.response?.status === 401) {
+      // Token expired or invalid - clear storage and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // Only redirect if not already on login page
+      if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
     }

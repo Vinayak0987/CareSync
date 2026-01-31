@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { FloatingLanguageSwitcher } from '@/components/layout/FloatingLanguageSwitcher';
 import { DashboardHome } from '@/components/dashboard/DashboardHome';
 import { AppointmentsView } from '@/components/appointments/AppointmentsView';
 import { RecordsView } from '@/components/records/RecordsView';
@@ -49,8 +50,12 @@ const Index = ({ onLogout }: IndexProps) => {
 
       {/* Floating Emergency Button - Always visible */}
       <EmergencyButton />
+      
+      {/* Floating Language Switcher - Bottom Right */}
+      <FloatingLanguageSwitcher />
     </div>
   );
 };
 
 export default Index;
+

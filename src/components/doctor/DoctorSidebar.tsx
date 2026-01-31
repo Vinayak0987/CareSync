@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, 
   Video, 
@@ -12,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { currentDoctor } from '@/lib/mockData';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface DoctorSidebarProps {
   activeTab: string;
@@ -19,15 +19,16 @@ interface DoctorSidebarProps {
   onLogout: () => void;
 }
 
-const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'consultation', label: 'Consultation', icon: Video },
-  { id: 'patients', label: 'Patient Records', icon: Users },
-  { id: 'settings', label: 'Settings', icon: Settings },
-];
-
 export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { t, td } = useLanguage();
+
+  const navItems = [
+    { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
+    { id: 'consultation', label: t('consultation'), icon: Video },
+    { id: 'patients', label: t('patientRecords'), icon: Users },
+    { id: 'settings', label: t('settings'), icon: Settings },
+  ];
 
   return (
     <>
@@ -62,7 +63,7 @@ export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSideba
             </div>
             <div>
               <span className="font-display font-bold text-lg gradient-text">CareSync</span>
-              <p className="text-xs text-muted-foreground">Doctor Portal</p>
+              <p className="text-xs text-muted-foreground">{t('doctorPortal')}</p>
             </div>
           </div>
         </div>
@@ -92,16 +93,14 @@ export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSideba
         {/* Doctor Profile */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 mb-3">
-             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                {JSON.parse(localStorage.getItem('user') || '{}')?.name?.charAt(0) || 'D'}
-              </div>
+            <img
+              src={currentDoctor.avatar}
+              alt={currentDoctor.name}
+              className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
+            />
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">
-                {JSON.parse(localStorage.getItem('user') || '{}')?.name || 'Doctor'}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                 {JSON.parse(localStorage.getItem('user') || '{}')?.specialty || 'General Physician'}
-              </p>
+              <p className="font-medium text-sm truncate">{currentDoctor.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{td(currentDoctor.specialty)}</p>
             </div>
           </div>
           <button
@@ -109,7 +108,7 @@ export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSideba
             className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-all"
           >
             <LogOut size={18} />
-            Logout
+            {t('logout')}
           </button>
         </div>
       </aside>

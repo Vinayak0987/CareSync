@@ -5,22 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-
-import api from '@/lib/api';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface QuickVitalsLogProps {
   onCriticalAlert: () => void;
-  onLogSuccess?: () => void;
 }
 
-export function QuickVitalsLog({ onCriticalAlert, onLogSuccess }: QuickVitalsLogProps) {
+export function QuickVitalsLog({ onCriticalAlert }: QuickVitalsLogProps) {
   const [systolic, setSystolic] = useState('120');
   const [diastolic, setDiastolic] = useState('80');
   const [bloodSugar, setBloodSugar] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const { t } = useLanguage();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -34,46 +33,13 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess }: QuickVitalsLog
       return;
     }
 
-    try {
-      // 1. Save Blood Pressure
-      const bpValue = `${systolic}/${diastolic}`;
-      let bpStatus = 'Normal';
-      if (systolicNum > 140 || diastolicNum > 90) bpStatus = 'High';
-      if (systolicNum < 90 || diastolicNum < 60) bpStatus = 'Low';
-
-      await api.post('/vitals', {
-        type: 'blood_pressure',
-        value: bpValue,
-        unit: 'mmHg',
-        status: bpStatus
-      });
-
-      // 2. Save Blood Sugar if provided
-      if (bloodSugar) {
-        let sugarStatus = 'Normal';
-        const sugarNum = parseInt(bloodSugar);
-        if (sugarNum < 70) sugarStatus = 'Low';
-        if (sugarNum > 140) sugarStatus = 'High'; // simplistic logic
-
-        await api.post('/vitals', {
-          type: 'blood_sugar',
-          value: bloodSugar,
-          unit: 'mg/dL',
-          status: sugarStatus
-        });
-      }
-
-      toast.success('Your health numbers are saved! ✅');
-      if (onLogSuccess) onLogSuccess();
-      
-      // Reset form? maybe keep values for reference or clear them
-      setBloodSugar('');
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to save vitals');
-    } finally {
+    // Simulate API call
+    setTimeout(() => {
       setIsSubmitting(false);
-    }
+      toast.success(t('success') + ' ✅', {
+        description: `${t('bloodPressure')}: ${systolic}/${diastolic}${bloodSugar ? ` | ${t('bloodSugar')}: ${bloodSugar}` : ''}`,
+      });
+    }, 1000);
   };
 
   // Determine BP status
@@ -104,8 +70,8 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess }: QuickVitalsLog
             <Activity size={18} className="text-primary" />
           </div>
           <div>
-            <h3 className="font-display font-semibold text-lg">Check Your Vitals</h3>
-            <p className="text-xs text-muted-foreground">Enter your health numbers</p>
+            <h3 className="font-display font-semibold text-lg">{t('checkYourVitals')}</h3>
+            <p className="text-xs text-muted-foreground">{t('enterHealthNumbers')}</p>
           </div>
         </div>
         <button
@@ -125,8 +91,8 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess }: QuickVitalsLog
         >
           <h4 className="font-medium text-sm text-blue-800 mb-2">📖 How to measure?</h4>
           <div className="space-y-2 text-xs text-blue-700">
-            <p><strong>Blood Pressure (BP):</strong> Use a BP monitor on your arm. Sit quietly for 5 minutes before checking. The first number (bigger) is "Upper BP", the second is "Lower BP".</p>
-            <p><strong>Blood Sugar:</strong> Use a glucometer. Best to check before breakfast (fasting) or 2 hours after eating.</p>
+            <p><strong>{t('bloodPressure')}:</strong> Use a BP monitor on your arm. Sit quietly for 5 minutes before checking.</p>
+            <p><strong>{t('bloodSugar')}:</strong> Use a glucometer. Best to check before breakfast (fasting) or 2 hours after eating.</p>
           </div>
         </motion.div>
       )}
@@ -136,7 +102,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess }: QuickVitalsLog
         <div className="p-4 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl border border-rose-100">
           <div className="flex items-center gap-2 mb-3">
             <Heart size={16} className="text-rose-500" fill="currentColor" />
-            <span className="font-medium text-sm">Blood Pressure (BP)</span>
+            <span className="font-medium text-sm">{t('bloodPressure')} (BP)</span>
           </div>
           
           <div className="grid grid-cols-2 gap-3">
@@ -192,7 +158,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess }: QuickVitalsLog
         <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
           <div className="flex items-center gap-2 mb-3">
             <Droplet size={16} className="text-blue-500" />
-            <span className="font-medium text-sm">Blood Sugar Level</span>
+            <span className="font-medium text-sm">{t('bloodSugar')}</span>
             <span className="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">Optional</span>
           </div>
           
@@ -233,7 +199,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess }: QuickVitalsLog
               ⚠️ High BP Alert
             </p>
             <p className="text-xs text-amber-700">
-              If your BP is above <strong>160/100</strong>, we will immediately connect you with a doctor for urgent care. Your health is our priority!
+              If your BP is above <strong>160/100</strong>, we will immediately connect you with a doctor for urgent care!
             </p>
           </div>
         </div>
@@ -249,7 +215,7 @@ export function QuickVitalsLog({ onCriticalAlert, onLogSuccess }: QuickVitalsLog
           ) : (
             <>
               <Activity size={18} className="mr-2" />
-              Save My Vitals
+              {t('save')}
             </>
           )}
         </Button>

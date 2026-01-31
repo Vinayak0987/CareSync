@@ -1,19 +1,35 @@
 import { motion } from 'framer-motion';
-import { FileText, Download, ShoppingBag, Calendar, Pill, Stethoscope } from 'lucide-react';
+import { FileText, Download, Calendar, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { prescriptions, pastAppointments } from '@/lib/mockData';
-import { toast } from 'sonner';
 
 interface RecordsViewProps {
   onNavigate: (tab: string) => void;
 }
 
 export function RecordsView({ onNavigate }: RecordsViewProps) {
-  const downloadPrescription = (id: string) => {
-    toast.success('Prescription downloaded!', {
-      description: 'PDF saved to your downloads folder',
-    });
-  };
+  const records = [
+    {
+      id: 1,
+      title: 'Blood Test Results',
+      date: '2024-01-25',
+      doctor: 'Dr. Sarah Johnson',
+      type: 'Lab Report',
+    },
+    {
+      id: 2,
+      title: 'X-Ray Chest',
+      date: '2024-01-20',
+      doctor: 'Dr. Michael Chen',
+      type: 'Imaging',
+    },
+    {
+      id: 3,
+      title: 'Annual Checkup',
+      date: '2024-01-15',
+      doctor: 'Dr. Sarah Johnson',
+      type: 'General',
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -22,146 +38,59 @@ export function RecordsView({ onNavigate }: RecordsViewProps) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">My Records</h1>
-        <p className="text-muted-foreground">View your medical history and prescriptions</p>
+        <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">Medical Records</h1>
+        <p className="text-muted-foreground">View and download your medical documents</p>
       </motion.div>
 
-      {/* Summary Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="vitals-card bg-gradient-to-r from-primary/5 via-transparent to-transparent"
-      >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="text-center p-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-2">
-              <Stethoscope size={20} className="text-primary" />
-            </div>
-            <p className="text-2xl font-display font-bold">{pastAppointments.length + 1}</p>
-            <p className="text-xs text-muted-foreground">Total Visits</p>
-          </div>
-          <div className="text-center p-3">
-            <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-2">
-              <FileText size={20} className="text-success" />
-            </div>
-            <p className="text-2xl font-display font-bold">{prescriptions.length}</p>
-            <p className="text-xs text-muted-foreground">Prescriptions</p>
-          </div>
-          <div className="text-center p-3">
-            <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center mx-auto mb-2">
-              <Pill size={20} className="text-warning" />
-            </div>
-            <p className="text-2xl font-display font-bold">4</p>
-            <p className="text-xs text-muted-foreground">Active Medicines</p>
-          </div>
-          <div className="text-center p-3">
-            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-2">
-              <Calendar size={20} className="text-accent" />
-            </div>
-            <p className="text-2xl font-display font-bold">2</p>
-            <p className="text-xs text-muted-foreground">This Year</p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Past Appointments Timeline */}
-      <div>
-        <h2 className="font-display font-semibold text-lg mb-4">Visit History</h2>
-        <div className="space-y-4">
-          {pastAppointments.map((apt, index) => (
-            <motion.div
-              key={apt.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="vitals-card flex items-center gap-4"
-            >
-              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                <Calendar size={20} className="text-muted-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium">{apt.doctorName}</h3>
-                <p className="text-sm text-primary">{apt.specialty}</p>
-                <p className="text-xs text-muted-foreground mt-1">{apt.date} • {apt.time}</p>
-              </div>
-              <span className="px-2.5 py-1 bg-success/10 text-success text-xs font-medium rounded-full">
-                Completed
-              </span>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Prescriptions */}
-      <div>
-        <h2 className="font-display font-semibold text-lg mb-4">Prescriptions</h2>
-        <div className="space-y-4">
-          {prescriptions.map((rx, index) => (
-            <motion.div
-              key={rx.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="vitals-card"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="font-display font-semibold">{rx.diagnosis}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {rx.doctorName} • {rx.date}
-                  </p>
+      {/* Records List */}
+      <div className="grid gap-4">
+        {records.map((record, index) => (
+          <motion.div
+            key={record.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="bg-card rounded-xl p-5 border border-border shadow-sm hover:shadow-md transition-all"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <FileText size={24} className="text-primary" />
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => downloadPrescription(rx.id)}
-                  >
-                    <Download size={14} className="mr-1" />
-                    PDF
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => onNavigate('store')}
-                    className="bg-primary"
-                  >
-                    <ShoppingBag size={14} className="mr-1" />
-                    Buy
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2 mb-4">
-                {rx.medicines.map((med, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Pill size={16} className="text-primary" />
-                      <div>
-                        <p className="font-medium text-sm">{med.name}</p>
-                        <p className="text-xs text-muted-foreground">{med.dosage}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{med.frequency}</p>
-                      <p className="text-xs text-muted-foreground">{med.duration}</p>
-                    </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-display font-semibold text-lg mb-1">{record.title}</h3>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar size={14} />
+                      {record.date}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <User size={14} />
+                      {record.doctor}
+                    </span>
+                    <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                      {record.type}
+                    </span>
                   </div>
-                ))}
+                </div>
               </div>
-
-              <div className="pt-3 border-t border-border">
-                <p className="text-sm">
-                  <span className="font-medium">Advice:</span>{' '}
-                  <span className="text-muted-foreground">{rx.advice}</span>
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              <Button size="sm" variant="outline" className="flex-shrink-0">
+                <Download size={16} className="mr-2" />
+                Download
+              </Button>
+            </div>
+          </motion.div>
+        ))}
       </div>
+
+      {/* Empty State */}
+      {records.length === 0 && (
+        <div className="text-center py-12">
+          <FileText size={48} className="mx-auto text-muted-foreground mb-4" />
+          <h3 className="font-medium text-lg mb-2">No records yet</h3>
+          <p className="text-muted-foreground">Your medical records will appear here</p>
+        </div>
+      )}
     </div>
   );
 }

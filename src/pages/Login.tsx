@@ -9,8 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import api from '@/lib/api';
-import { toast } from 'sonner';
 
 type UserRole = 'patient' | 'doctor' | 'admin';
 type Language = 'en' | 'hi' | 'mr' | 'ta' | 'te' | 'bn';
@@ -356,7 +354,7 @@ export function Login({ onLogin }: LoginProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isLogin && signupStep < totalSignupSteps) {
@@ -365,52 +363,20 @@ export function Login({ onLogin }: LoginProps) {
     }
     
     setIsLoading(true);
-
-    try {
-      if (isLogin) {
-        // LOGIN logic
-        const response = await api.post('/auth/login', { email, password });
-        
-        // Store user data
-        localStorage.setItem('user', JSON.stringify(response.data));
-        toast.success(`Welcome back, ${response.data.name}!`);
-        
-        // Use the role from the response, but if the user selected a different role in UI, warn them or just use response role.
-        // For now, we trust the backend's role.
-        onLogin(response.data.role as UserRole);
-      } else {
-        // REGISTER logic
-        const registerData = {
-          name: signupData.fullName,
-          email,
-          password,
-          phone: signupData.phone,
-          role: selectedRole,
-          dateOfBirth: signupData.dateOfBirth,
-          gender: signupData.gender,
-          bloodGroup: signupData.bloodGroup,
-          allergies: signupData.allergies,
-          emergencyContact: {
-            name: signupData.emergencyName,
-            phone: signupData.emergencyPhone
-          }
-        };
-        
-        const response = await api.post('/auth/register', registerData);
-        
-        localStorage.setItem('user', JSON.stringify(response.data));
-        localStorage.setItem('onboardingComplete', 'true'); // They just did it
-        
-        toast.success('Account created successfully! 🎉');
-        onLogin(response.data.role as UserRole);
-      }
-    } catch (error: any) {
-      console.error(error);
-      const message = error.response?.data?.message || 'Something went wrong';
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
+    
+    // Save user profile for signup
+    if (!isLogin) {
+      localStorage.setItem('userProfile', JSON.stringify({
+        ...signupData,
+        email,
+      }));
+      localStorage.setItem('onboardingComplete', 'true');
     }
+    
+    setTimeout(() => {
+      setIsLoading(false);
+      onLogin(selectedRole);
+    }, 1500);
   };
 
   const fillDemo = () => {

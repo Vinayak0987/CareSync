@@ -3,6 +3,7 @@ import { Calendar, Clock, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Appointment } from '@/lib/mockData';
 import { doctors } from '@/lib/mockData';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface NextAppointmentProps {
   appointment: Appointment | undefined;
@@ -10,6 +11,8 @@ interface NextAppointmentProps {
 }
 
 export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProps) {
+  const { t, td } = useLanguage();
+  
   if (!appointment) {
     return (
       <motion.div
@@ -17,7 +20,7 @@ export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProp
         animate={{ opacity: 1, y: 0 }}
         className="bg-card rounded-xl p-6 border border-border shadow-sm"
       >
-        <p className="text-muted-foreground text-center">No upcoming appointments</p>
+        <p className="text-muted-foreground text-center">{t('noData')}</p>
       </motion.div>
     );
   }
@@ -43,15 +46,15 @@ export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProp
 
         {/* Appointment Details */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground mb-0.5">Next Appointment</p>
+          <p className="text-xs text-muted-foreground mb-0.5">{t('nextAppointment')}</p>
           <h3 className="font-display font-semibold text-lg text-foreground">
             {appointment.doctorName}
           </h3>
-          <p className="text-sm text-primary font-medium">{appointment.specialty}</p>
+          <p className="text-sm text-primary font-medium">{td(appointment.specialty)}</p>
           
           {appointment.reason && (
             <p className="text-sm text-muted-foreground mt-2">
-              <span className="font-medium text-foreground">Reason:</span> {appointment.reason}
+              <span className="font-medium text-foreground">{t('reason')}:</span> {appointment.reason}
             </p>
           )}
         </div>
@@ -61,7 +64,7 @@ export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProp
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar size={16} />
-              <span className="font-medium text-foreground">{appointment.date}</span>
+              <span className="font-medium text-foreground">{t('today')}</span>
             </div>
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Clock size={16} />
@@ -74,7 +77,7 @@ export function NextAppointment({ appointment, onJoinCall }: NextAppointmentProp
             className="btn-hero flex items-center gap-2 whitespace-nowrap"
           >
             <Video size={18} />
-            Join Call
+            {t('joinCall')}
           </Button>
         </div>
       </div>

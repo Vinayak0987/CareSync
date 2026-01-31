@@ -6,9 +6,6 @@ import {
   Pill, 
   Activity, 
   ShoppingBag, 
-  Shield, 
-  Clock, 
-  Users,
   ArrowRight,
   Check,
   Star,
@@ -18,92 +15,96 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-const features = [
-  {
-    icon: Video,
-    title: 'Telemedicine',
-    description: 'Connect with doctors through HD video consultations from the comfort of your home.',
-    color: 'bg-sky-100 text-sky-600',
-  },
-  {
-    icon: Activity,
-    title: 'Health Tracking',
-    description: 'Monitor your vitals, get smart alerts, and track your health trends over time.',
-    color: 'bg-rose-100 text-rose-600',
-  },
-  {
-    icon: Pill,
-    title: 'Digital Prescriptions',
-    description: 'Receive and manage prescriptions digitally. No more illegible handwriting!',
-    color: 'bg-violet-100 text-violet-600',
-  },
-  {
-    icon: ShoppingBag,
-    title: 'Medicine Delivery',
-    description: 'Order medicines directly from your prescription and get them delivered.',
-    color: 'bg-amber-100 text-amber-600',
-  },
-];
-
-const stats = [
-  { value: '10,000+', label: 'Active Patients' },
-  { value: '500+', label: 'Verified Doctors' },
-  { value: '50,000+', label: 'Consultations' },
-  { value: '4.9★', label: 'User Rating' },
-];
-
-const testimonials = [
-  {
-    name: 'Priya Sharma',
-    role: 'Patient',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face',
-    quote: 'CareSync made managing my diabetes so much easier. I can track my sugar levels and consult my doctor without leaving home.',
-    rating: 5,
-  },
-  {
-    name: 'Dr. Arun Mehta',
-    role: 'General Physician',
-    image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop&crop=face',
-    quote: 'As a doctor, CareSync helps me provide better care to my patients with access to their complete health history.',
-    rating: 5,
-  },
-  {
-    name: 'Rajesh Kumar',
-    role: 'Patient',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-    quote: 'The emergency alert feature literally saved my life when my BP spiked. Got connected to a doctor within minutes!',
-    rating: 5,
-  },
-];
-
-const pricingPlans = [
-  {
-    name: 'Basic',
-    price: 'Free',
-    description: 'For individuals starting their health journey',
-    features: ['Health tracking', 'Medicine reminders', 'Community access', '1 free consultation/month'],
-    popular: false,
-  },
-  {
-    name: 'Pro',
-    price: '₹299',
-    period: '/month',
-    description: 'For patients needing regular care',
-    features: ['Everything in Basic', 'Unlimited consultations', 'Priority appointments', 'Digital prescriptions', 'Medicine delivery discounts'],
-    popular: true,
-  },
-  {
-    name: 'Family',
-    price: '₹599',
-    period: '/month',
-    description: 'Care for the whole family',
-    features: ['Everything in Pro', 'Up to 5 family members', 'Family health dashboard', 'Dedicated care manager', '24/7 priority support'],
-    popular: false,
-  },
-];
+import { LanguageSwitcher } from '@/lib/i18n/LanguageSwitcher';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export function Landing() {
+  const { t } = useLanguage();
+
+  const features = [
+    {
+      icon: Video,
+      title: t('telemedicine'),
+      description: t('telemedicineDesc'),
+      color: 'bg-sky-100 text-sky-600',
+    },
+    {
+      icon: Activity,
+      title: t('healthTracking'),
+      description: t('healthTrackingDesc'),
+      color: 'bg-rose-100 text-rose-600',
+    },
+    {
+      icon: Pill,
+      title: t('digitalPrescriptions'),
+      description: t('digitalPrescriptionsDesc'),
+      color: 'bg-violet-100 text-violet-600',
+    },
+    {
+      icon: ShoppingBag,
+      title: t('medicineDelivery'),
+      description: t('medicineDeliveryDesc'),
+      color: 'bg-amber-100 text-amber-600',
+    },
+  ];
+
+  const stats = [
+    { value: '10,000+', label: t('activePatients') },
+    { value: '500+', label: t('verifiedDoctors') },
+    { value: '50,000+', label: t('consultations') },
+    { value: '4.9★', label: t('userRating') },
+  ];
+
+  const testimonials = [
+    {
+      name: 'Priya Sharma',
+      role: 'Patient',
+      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face',
+      quote: 'CareSync made managing my diabetes so much easier. I can track my sugar levels and consult my doctor without leaving home.',
+      rating: 5,
+    },
+    {
+      name: 'Dr. Arun Mehta',
+      role: 'General Physician',
+      image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop&crop=face',
+      quote: 'As a doctor, CareSync helps me provide better care to my patients with access to their complete health history.',
+      rating: 5,
+    },
+    {
+      name: 'Rajesh Kumar',
+      role: 'Patient',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+      quote: 'The emergency alert feature literally saved my life when my BP spiked. Got connected to a doctor within minutes!',
+      rating: 5,
+    },
+  ];
+
+  const pricingPlans = [
+    {
+      name: t('basic'),
+      price: t('free'),
+      description: 'For individuals starting their health journey',
+      features: ['Health tracking', 'Medicine reminders', 'Community access', '1 free consultation/month'],
+      popular: false,
+    },
+    {
+      name: t('pro'),
+      price: '₹299',
+      period: t('perMonth'),
+      description: 'For patients needing regular care',
+      features: ['Everything in Basic', 'Unlimited consultations', 'Priority appointments', 'Digital prescriptions', 'Medicine delivery discounts'],
+      popular: true,
+    },
+    {
+      name: t('family'),
+      price: '₹599',
+      period: t('perMonth'),
+      description: 'Care for the whole family',
+      features: ['Everything in Pro', 'Up to 5 family members', 'Family health dashboard', 'Dedicated care manager', '24/7 priority support'],
+      popular: false,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -120,19 +121,20 @@ export function Landing() {
 
             {/* Nav Links */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How it Works</a>
-              <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
-              <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+              <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">{t('features')}</a>
+              <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">{t('howItWorks')}</a>
+              <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">{t('testimonials')}</a>
+              <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">{t('pricing')}</a>
             </div>
 
-            {/* CTA Buttons */}
+            {/* Language Switcher & CTA Buttons */}
             <div className="flex items-center gap-3">
+              <LanguageSwitcher variant="compact" />
               <Link to="/login">
-                <Button variant="ghost" size="sm">Sign In</Button>
+                <Button variant="ghost" size="sm">{t('signIn')}</Button>
               </Link>
               <Link to="/login">
-                <Button size="sm" className="btn-hero">Get Started</Button>
+                <Button size="sm" className="btn-hero">{t('getStarted')}</Button>
               </Link>
             </div>
           </div>
@@ -151,28 +153,28 @@ export function Landing() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary text-sm font-medium mb-6">
                 <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                Trusted by 10,000+ patients
+                {t('trustedBy')}
               </div>
               
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-foreground leading-tight mb-6">
-                Your Health,{' '}
-                <span className="gradient-text">Simplified</span>
+                {t('heroTitle')}{' '}
+                <span className="gradient-text">{t('simplified')}</span>
               </h1>
               
               <p className="text-lg text-muted-foreground mb-8 max-w-lg">
-                Connect with doctors, track your vitals, manage prescriptions, and order medicines — all from one seamless platform designed for your wellness.
+                {t('heroDescription')}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
                 <Link to="/login">
                   <Button size="lg" className="btn-hero w-full sm:w-auto">
-                    Start Your Journey
+                    {t('startJourney')}
                     <ArrowRight size={18} className="ml-2" />
                   </Button>
                 </Link>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto">
                   <Video size={18} className="mr-2" />
-                  Watch Demo
+                  {t('watchDemo')}
                 </Button>
               </div>
 
@@ -212,7 +214,7 @@ export function Landing() {
                       <Heart size={20} className="text-success" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Heart Rate</p>
+                      <p className="text-sm font-medium">{t('heartRate')}</p>
                       <p className="text-lg font-display font-bold">72 bpm</p>
                     </div>
                   </div>
@@ -229,7 +231,7 @@ export function Landing() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Dr. Priya Sharma</p>
-                      <p className="text-xs text-success">Available Now</p>
+                      <p className="text-xs text-success">{t('availableNow')}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -256,7 +258,7 @@ export function Landing() {
                   <div className="flex gap-2">
                     <Button className="flex-1 btn-hero" size="sm">
                       <Video size={16} className="mr-2" />
-                      Video Call
+                      {t('videoCall')}
                     </Button>
                     <Button variant="outline" size="sm">
                       <Phone size={16} />
@@ -279,10 +281,10 @@ export function Landing() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4">
-              Everything You Need for <span className="gradient-text">Better Health</span>
+              {t('everythingYouNeed')} <span className="gradient-text">{t('betterHealth')}</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              From consultations to medicine delivery, we've got every aspect of your healthcare journey covered.
+              {t('featuresDescription')}
             </p>
           </motion.div>
 
@@ -317,18 +319,18 @@ export function Landing() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4">
-              How <span className="gradient-text">CareSync</span> Works
+              {t('howCareSyncWorks')}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Get started in minutes and experience healthcare like never before.
+              {t('howItWorksDesc')}
             </p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { step: '01', title: 'Create Account', description: 'Sign up in seconds with your email or phone number.' },
-              { step: '02', title: 'Book Consultation', description: 'Choose a specialist, pick a time, and book your video call.' },
-              { step: '03', title: 'Get Care', description: 'Consult, receive prescriptions, and order medicines—all digitally.' },
+              { step: '01', title: t('createAccount'), description: t('createAccountDesc') },
+              { step: '02', title: t('bookConsultation'), description: t('bookConsultationDesc') },
+              { step: '03', title: t('getCare'), description: t('getCareDesc') },
             ].map((item, index) => (
               <motion.div
                 key={item.step}
@@ -360,10 +362,10 @@ export function Landing() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4">
-              Loved by <span className="gradient-text">Patients & Doctors</span>
+              {t('lovedBy')} <span className="gradient-text">{t('patientsAndDoctors')}</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              See what our community has to say about their CareSync experience.
+              {t('testimonialsDesc')}
             </p>
           </motion.div>
 
@@ -410,10 +412,10 @@ export function Landing() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4">
-              Simple, <span className="gradient-text">Transparent Pricing</span>
+              {t('simpleTransparent')} <span className="gradient-text">{t('transparentPricing')}</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose the plan that fits your healthcare needs. No hidden fees.
+              {t('pricingDesc')}
             </p>
           </motion.div>
 
@@ -431,7 +433,7 @@ export function Landing() {
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                    Most Popular
+                    {t('mostPopular')}
                   </div>
                 )}
                 <h3 className="font-display font-semibold text-xl mb-2">{plan.name}</h3>
@@ -453,7 +455,7 @@ export function Landing() {
                     className={`w-full ${plan.popular ? 'btn-hero' : ''}`}
                     variant={plan.popular ? 'default' : 'outline'}
                   >
-                    Get Started
+                    {t('getStarted')}
                   </Button>
                 </Link>
               </motion.div>
@@ -477,14 +479,14 @@ export function Landing() {
             </div>
             <div className="relative z-10">
               <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4">
-                Ready to Take Control of Your Health?
+                {t('readyToTakeControl')}
               </h2>
               <p className="text-lg text-white/80 mb-8 max-w-xl mx-auto">
-                Join thousands of patients who trust CareSync for their healthcare needs.
+                {t('ctaDescription')}
               </p>
               <Link to="/login">
                 <Button size="lg" variant="secondary" className="bg-white text-primary hover:bg-white/90">
-                  Create Free Account
+                  {t('createFreeAccount')}
                   <ArrowRight size={18} className="ml-2" />
                 </Button>
               </Link>
@@ -518,27 +520,27 @@ export function Landing() {
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Product</h4>
+              <h4 className="font-semibold mb-4">{t('product')}</h4>
               <ul className="space-y-2 text-sm text-background/60">
-                <li><a href="#features" className="hover:text-background transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-background transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">For Doctors</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">For Hospitals</a></li>
+                <li><a href="#features" className="hover:text-background transition-colors">{t('features')}</a></li>
+                <li><a href="#pricing" className="hover:text-background transition-colors">{t('pricing')}</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">{t('forDoctors')}</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">{t('forHospitals')}</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
+              <h4 className="font-semibold mb-4">{t('company')}</h4>
               <ul className="space-y-2 text-sm text-background/60">
-                <li><a href="#" className="hover:text-background transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">{t('aboutUs')}</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">{t('careers')}</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">{t('blog')}</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">{t('contact')}</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Contact</h4>
+              <h4 className="font-semibold mb-4">{t('contact')}</h4>
               <ul className="space-y-2 text-sm text-background/60">
                 <li className="flex items-center gap-2">
                   <Mail size={14} />
@@ -558,11 +560,11 @@ export function Landing() {
           
           <div className="border-t border-background/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-background/60">
-              © 2026 CareSync. All rights reserved.
+              © 2026 CareSync. {t('allRightsReserved')}
             </p>
             <div className="flex gap-6 text-sm text-background/60">
-              <a href="#" className="hover:text-background transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-background transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-background transition-colors">{t('privacyPolicy')}</a>
+              <a href="#" className="hover:text-background transition-colors">{t('termsOfService')}</a>
             </div>
           </div>
         </div>
