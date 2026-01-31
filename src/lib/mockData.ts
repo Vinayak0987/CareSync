@@ -212,3 +212,86 @@ export const mockChatMessages: ChatMessage[] = [
   { id: '4', sender: 'patient', message: 'Yes, I haven\'t missed any doses. Also started walking 30 mins every morning.', timestamp: '10:33 AM' },
   { id: '5', sender: 'doctor', message: 'Excellent! Keep it up. Let me check your latest vitals and we can discuss the next steps.', timestamp: '10:34 AM' },
 ];
+
+// Vitals history for charts (7 days)
+export interface VitalHistoryEntry {
+  date: string;
+  systolic: number;
+  diastolic: number;
+  bloodSugar: number;
+  heartRate: number;
+  oxygen: number;
+}
+
+export const vitalsHistory: VitalHistoryEntry[] = [
+  { date: 'Jan 25', systolic: 128, diastolic: 85, bloodSugar: 118, heartRate: 78, oxygen: 97 },
+  { date: 'Jan 26', systolic: 125, diastolic: 82, bloodSugar: 112, heartRate: 74, oxygen: 98 },
+  { date: 'Jan 27', systolic: 130, diastolic: 88, bloodSugar: 125, heartRate: 80, oxygen: 96 },
+  { date: 'Jan 28', systolic: 122, diastolic: 80, bloodSugar: 108, heartRate: 72, oxygen: 98 },
+  { date: 'Jan 29', systolic: 118, diastolic: 78, bloodSugar: 102, heartRate: 70, oxygen: 99 },
+  { date: 'Jan 30', systolic: 120, diastolic: 80, bloodSugar: 105, heartRate: 72, oxygen: 98 },
+  { date: 'Jan 31', systolic: 120, diastolic: 80, bloodSugar: 105, heartRate: 72, oxygen: 98 },
+];
+
+// Medication adherence data
+export interface AdherenceEntry {
+  date: string;
+  taken: number;
+  total: number;
+}
+
+export const medicationAdherence: AdherenceEntry[] = [
+  { date: 'Jan 25', taken: 3, total: 3 },
+  { date: 'Jan 26', taken: 3, total: 3 },
+  { date: 'Jan 27', taken: 2, total: 3 },
+  { date: 'Jan 28', taken: 3, total: 3 },
+  { date: 'Jan 29', taken: 3, total: 3 },
+  { date: 'Jan 30', taken: 2, total: 3 },
+  { date: 'Jan 31', taken: 1, total: 3 },
+];
+
+// Community posts for wellness
+export interface CommunityPost {
+  id: string;
+  username: string;
+  message: string;
+  topic: string;
+  timestamp: string;
+  likes: number;
+}
+
+export const communityPosts: CommunityPost[] = [
+  {
+    id: 'post-001',
+    username: 'PeacefulLion',
+    message: 'Just completed my 30-day meditation streak! Feeling so much calmer these days.',
+    topic: 'Mental Health',
+    timestamp: '2 hours ago',
+    likes: 24,
+  },
+  {
+    id: 'post-002',
+    username: 'HealthyHeart_92',
+    message: 'Anyone else managing hypertension with diet changes? Reduced salt has helped me a lot.',
+    topic: 'Heart Health',
+    timestamp: '4 hours ago',
+    likes: 18,
+  },
+  {
+    id: 'post-003',
+    username: 'WellnessWarrior',
+    message: 'The breathing exercises here are amazing! My anxiety has reduced significantly.',
+    topic: 'Anxiety',
+    timestamp: '6 hours ago',
+    likes: 32,
+  },
+  {
+    id: 'post-004',
+    username: 'DiabetesFighter',
+    message: 'Tip: Walking after meals really helps control blood sugar spikes 🏃‍♂️',
+    topic: 'Diabetes',
+    timestamp: '1 day ago',
+    likes: 45,
+  },
+];
+

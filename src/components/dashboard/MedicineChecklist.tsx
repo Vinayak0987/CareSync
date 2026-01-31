@@ -1,84 +1,106 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Pill, Check } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
-const medicines = [
-  { id: 'morning', label: 'Morning Dose', time: '8:00 AM', medicines: 'Amlodipine 5mg' },
-  { id: 'afternoon', label: 'Afternoon Dose', time: '2:00 PM', medicines: 'Metformin 500mg' },
-  { id: 'evening', label: 'Evening Dose', time: '8:00 PM', medicines: 'Aspirin 75mg' },
+interface Medicine {
+  id: string;
+  name: string;
+  dosage: string;
+  time: string;
+  completed: boolean;
+}
+
+const initialMedicines: Medicine[] = [
+  { id: '1', name: 'Morning Dose', dosage: 'Amlodipine 5mg', time: '8:00 AM', completed: true },
+  { id: '2', name: 'Afternoon Dose', dosage: 'Metformin 500mg', time: '2:00 PM', completed: false },
+  { id: '3', name: 'Evening Dose', dosage: 'Aspirin 75mg', time: '8:00 PM', completed: false },
 ];
 
 export function MedicineChecklist() {
-  const [checked, setChecked] = useState<Record<string, boolean>>({
-    morning: true,
-    afternoon: false,
-    evening: false,
-  });
+  const [medicines, setMedicines] = useState<Medicine[]>(initialMedicines);
 
-  const completedCount = Object.values(checked).filter(Boolean).length;
-  const progress = (completedCount / medicines.length) * 100;
+  const toggleMedicine = (id: string) => {
+    setMedicines(prev =>
+      prev.map(med =>
+        med.id === id ? { ...med, completed: !med.completed } : med
+      )
+    );
+  };
+
+  const completedCount = medicines.filter(m => m.completed).length;
+  const totalCount = medicines.length;
+  const progressPercent = (completedCount / totalCount) * 100;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="vitals-card"
+      className="bg-card rounded-xl p-5 border border-border shadow-sm"
     >
+      {/* Header with Progress */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Pill size={18} className="text-primary" />
-          </div>
-          <h3 className="font-display font-semibold">Today's Medicines</h3>
+          <Pill size={20} className="text-primary" />
+          <h3 className="font-display font-semibold text-lg">Today's Medicines</h3>
         </div>
-        <span className="text-xs font-medium text-muted-foreground">
-          {completedCount}/{medicines.length} done
+        <span className="text-sm text-muted-foreground">
+          {completedCount}/{totalCount} done
         </span>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-1.5 bg-muted rounded-full mb-4 overflow-hidden">
+      {/* Progress Bar */}
+      <div className="h-2 bg-muted rounded-full mb-5 overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
-          animate={{ width: `${progress}%` }}
+          animate={{ width: `${progressPercent}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
           className="h-full bg-primary rounded-full"
         />
       </div>
 
+      {/* Medicine List */}
       <div className="space-y-3">
-        {medicines.map((med) => (
-          <label
-            key={med.id}
+        {medicines.map((medicine, index) => (
+          <motion.div
+            key={medicine.id}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1 }}
+            onClick={() => toggleMedicine(medicine.id)}
             className={cn(
-              "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-              checked[med.id] 
-                ? "bg-success/5 border-success/30" 
-                : "bg-background border-border hover:border-primary/30"
+              "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all",
+              medicine.completed 
+                ? "bg-primary/5 border border-primary/20" 
+                : "bg-muted/50 hover:bg-muted"
             )}
           >
-            <Checkbox
-              checked={checked[med.id]}
-              onCheckedChange={(c) => setChecked(prev => ({ ...prev, [med.id]: !!c }))}
-              className="data-[state=checked]:bg-success data-[state=checked]:border-success"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className={cn(
-                  "font-medium text-sm",
-                  checked[med.id] && "line-through text-muted-foreground"
-                )}>
-                  {med.label}
-                </span>
-                {checked[med.id] && (
-                  <Check size={14} className="text-success" />
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">{med.medicines} • {med.time}</p>
+            {/* Checkbox */}
+            <div
+              className={cn(
+                "w-6 h-6 rounded-full flex items-center justify-center transition-all flex-shrink-0",
+                medicine.completed
+                  ? "bg-primary text-white"
+                  : "border-2 border-muted-foreground/30"
+              )}
+            >
+              {medicine.completed && <Check size={14} strokeWidth={3} />}
             </div>
-          </label>
+
+            {/* Medicine Info */}
+            <div className="flex-1 min-w-0">
+              <p className={cn(
+                "font-medium text-sm flex items-center gap-2",
+                medicine.completed && "text-primary"
+              )}>
+                {medicine.name}
+                {medicine.completed && <Check size={14} className="text-primary" />}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {medicine.dosage} • {medicine.time}
+              </p>
+            </div>
+          </motion.div>
         ))}
       </div>
     </motion.div>

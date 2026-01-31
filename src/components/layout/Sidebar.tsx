@@ -7,6 +7,7 @@ import {
   Video, 
   ShoppingBag, 
   Heart,
+  BarChart3,
   LogOut,
   Menu,
   X
@@ -17,18 +18,20 @@ import { currentPatient } from '@/lib/mockData';
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onLogout: () => void;
 }
 
 const navItems = [
   { id: 'home', label: 'Dashboard', icon: Home },
   { id: 'appointments', label: 'Appointments', icon: Calendar },
   { id: 'records', label: 'My Records', icon: FileText },
+  { id: 'reports', label: 'Reports', icon: BarChart3 },
   { id: 'consultation', label: 'Consultation', icon: Video },
   { id: 'store', label: 'Medical Store', icon: ShoppingBag },
   { id: 'wellness', label: 'Wellness', icon: Heart },
 ];
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
@@ -105,7 +108,11 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
                 <p className="font-medium text-sm truncate">{currentPatient.name}</p>
                 <p className="text-xs text-muted-foreground">Patient</p>
               </div>
-              <button className="p-2 hover:bg-sidebar-accent rounded-lg transition-colors">
+              <button 
+                onClick={onLogout}
+                className="p-2 hover:bg-sidebar-accent rounded-lg transition-colors"
+                title="Logout"
+              >
                 <LogOut size={18} className="text-muted-foreground" />
               </button>
             </div>
