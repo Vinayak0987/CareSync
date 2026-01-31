@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  Video, 
-  Users, 
+import {
+  LayoutDashboard,
+  Video,
+  Users,
   Settings,
   LogOut,
   Menu,
   X,
   Stethoscope,
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { currentDoctor } from '@/lib/mockData';
@@ -25,6 +26,7 @@ const navItems = [
   { id: 'appointments', label: 'Appointments', icon: Calendar },
   { id: 'consultation', label: 'Consultation', icon: Video },
   { id: 'patients', label: 'Patient Records', icon: Users },
+  { id: 'community', label: 'Community', icon: MessageSquare },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
@@ -43,7 +45,7 @@ export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSideba
 
       {/* Mobile overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-foreground/30 backdrop-blur-sm z-40"
           onClick={() => setIsMobileOpen(false)}
         />
@@ -94,15 +96,15 @@ export function DoctorSidebar({ activeTab, onTabChange, onLogout }: DoctorSideba
         {/* Doctor Profile */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 mb-3">
-             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                {JSON.parse(localStorage.getItem('user') || '{}')?.name?.charAt(0) || 'D'}
-              </div>
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+              {JSON.parse(localStorage.getItem('user') || '{}')?.name?.charAt(0) || 'D'}
+            </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">
                 {JSON.parse(localStorage.getItem('user') || '{}')?.name || 'Doctor'}
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                 {JSON.parse(localStorage.getItem('user') || '{}')?.specialty || 'General Physician'}
+                {JSON.parse(localStorage.getItem('user') || '{}')?.specialty || 'General Physician'}
               </p>
             </div>
           </div>

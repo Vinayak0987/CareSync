@@ -28,6 +28,10 @@ app.use('/api/vitals', require('./routes/vitalRoutes'));
 app.use('/api/medicines', require('./routes/medicineRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/posts', require('./routes/postRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
+
+app.use(require('./middleware/errorMiddleware').errorHandler);
 
 const PORT = process.env.PORT || 5000;
 

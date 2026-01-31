@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Home, 
-  Calendar, 
-  FileText, 
-  Video, 
-  ShoppingBag, 
+import {
+  Home,
+  Calendar,
+  FileText,
+  Video,
+  ShoppingBag,
   Heart,
   BarChart3,
   LogOut,
   Menu,
-  X
+  X,
+  MessageSquare,
+  Gamepad2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { currentPatient } from '@/lib/mockData';
@@ -28,7 +30,8 @@ const navItems = [
   { id: 'reports', label: 'Reports', icon: BarChart3 },
   { id: 'consultation', label: 'Consultation', icon: Video },
   { id: 'store', label: 'Medical Store', icon: ShoppingBag },
-  { id: 'wellness', label: 'Wellness', icon: Heart },
+  { id: 'community', label: 'Community', icon: MessageSquare },
+  { id: 'wellness', label: 'Games & Activity', icon: Gamepad2 },
 ];
 
 export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
@@ -46,7 +49,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
 
       {/* Mobile overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-foreground/20 backdrop-blur-sm z-40"
           onClick={() => setIsMobileOpen(false)}
         />
@@ -61,7 +64,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b border-sidebar-border">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3"
@@ -96,7 +99,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
             ))}
           </nav>
 
-            {/* User Profile */}
+          {/* User Profile */}
           <div className="p-4 border-t border-sidebar-border">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
@@ -110,7 +113,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
                   {JSON.parse(localStorage.getItem('user') || '{}')?.role || 'Patient'}
                 </p>
               </div>
-              <button 
+              <button
                 onClick={onLogout}
                 className="p-2 hover:bg-sidebar-accent rounded-lg transition-colors"
                 title="Logout"

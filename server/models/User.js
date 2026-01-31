@@ -20,6 +20,10 @@ const userSchema = mongoose.Schema(
       type: String,
       required: [true, 'Please add a password'],
     },
+    avatar: {
+      type: String,
+      default: '',
+    },
     role: {
       type: String,
       enum: ['patient', 'doctor', 'pharmacy'],
@@ -27,7 +31,7 @@ const userSchema = mongoose.Schema(
     },
     // Doctor specific fields
     specialty: { type: String },
-    experience: { type: Number },
+    experience: { type: String },
     bio: { type: String },
     licenseNumber: { type: String },
     verificationStatus: {
