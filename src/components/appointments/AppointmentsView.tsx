@@ -206,19 +206,19 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
       {/* Booking Modal */}
       <AnimatePresence>
         {showBookingModal && selectedDoctor && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-foreground/30 backdrop-blur-sm z-50"
-              onClick={() => !bookingConfirmed && setShowBookingModal(false)}
-            />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-foreground/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !bookingConfirmed && setShowBookingModal(false)}
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed inset-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 bg-card rounded-2xl border border-border shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             >
               {bookingConfirmed ? (
                 <div className="p-8 text-center">
@@ -332,7 +332,7 @@ export function AppointmentsView({ onNavigate }: AppointmentsViewProps) {
                 </>
               )}
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

@@ -80,5 +80,6 @@ const updateAppointment = asyncHandler(async (req, res) => {
 module.exports = {
   bookAppointment,
   getMyAppointments,
+  getAllAppointments: getMyAppointments,  // Alias for cleaner routing
   updateAppointment,
 };

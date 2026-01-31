@@ -423,6 +423,17 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
     allergies: '',
     emergencyName: '',
     emergencyPhone: '',
+    chronicDiseases: '',
+    medicalReport: null as string | null,
+    licenseNumber: '',
+    specialty: '',
+    experience: '',
+    bio: '',
+    adminId: '',
+    department: '',
+    storeName: '',
+    address: '',
+    operatingHours: '',
   });
 
   const [uploadingReport, setUploadingReport] = useState(false);
@@ -430,8 +441,14 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
   const t = translations[language];
   const totalSignupSteps = 3;
 
-  const updateSignupData = (field: string, value: string) => {
-    setSignupData({ ...signupData, [field]: value });
+  const updateSignupData = (field: string, value: any) => {
+    if (field === 'phone' || field === 'emergencyPhone') {
+      // Only allow numbers and max 10 digits
+      const numericValue = String(value).replace(/\D/g, '').slice(0, 10);
+      setSignupData({ ...signupData, [field]: numericValue });
+    } else {
+      setSignupData({ ...signupData, [field]: value });
+    }
   };
 
   const canProceedSignup = () => {
@@ -493,7 +510,14 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
           emergencyContact: {
             name: signupData.emergencyName,
             phone: signupData.emergencyPhone
-          }
+          },
+          chronicDiseases: signupData.chronicDiseases ? [signupData.chronicDiseases] : [],
+          medicalReport: signupData.medicalReport || undefined,
+          // Doctor fields (if applicable)
+          licenseNumber: signupData.licenseNumber,
+          specialty: signupData.specialty,
+          experience: signupData.experience,
+          bio: signupData.bio,
         };
 
         const response = await api.post('/auth/register', registerData);

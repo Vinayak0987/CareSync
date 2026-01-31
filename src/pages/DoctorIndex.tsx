@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DoctorSidebar } from '@/components/doctor/DoctorSidebar';
 import { DoctorDashboard } from '@/components/doctor/DoctorDashboard';
+import { DoctorAppointments } from '@/components/doctor/DoctorAppointments';
 import { DoctorConsultation } from '@/components/doctor/DoctorConsultation';
 import { PatientHistory } from '@/components/doctor/PatientHistory';
 import { DoctorSettings } from '@/components/doctor/DoctorSettings';
@@ -33,6 +34,8 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
             onStartConsultation={handleStartConsultation}
           />
         );
+      case 'appointments':
+        return <DoctorAppointments />;
       case 'consultation':
         if (currentAppointment) {
           return (
