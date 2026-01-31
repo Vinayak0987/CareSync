@@ -22,6 +22,12 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error('User already exists');
   }
 
+  // Check if doctor provides license number
+  if (role === 'doctor' && !otherDetails.licenseNumber) {
+    res.status(400);
+    throw new Error('License number is required for doctors');
+  }
+
   // Create user
   const user = await User.create({
     name,

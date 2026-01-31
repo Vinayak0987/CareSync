@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Heart, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone, 
+import {
+  Heart, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone,
   Stethoscope, Users, Pill, Globe, Calendar, Droplet, CheckCircle, Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,12 @@ import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
-type UserRole = 'patient' | 'doctor' | 'admin';
+type UserRole = 'patient' | 'doctor' | 'pharmacy';
 type Language = 'en' | 'hi' | 'mr' | 'ta' | 'te' | 'bn';
 
 interface LoginProps {
   onLogin: (role: UserRole) => void;
+  defaultRole?: UserRole;
 }
 
 const translations = {
@@ -30,7 +31,7 @@ const translations = {
     loginAs: 'Login as',
     patient: 'Patient',
     doctor: 'Doctor',
-    admin: 'Admin',
+    pharmacy: 'Pharmacy',
     demoCredentials: 'Demo Credentials',
     useDemo: 'Use Demo',
     fullName: 'Full Name',
@@ -65,6 +66,19 @@ const translations = {
     emergencyName: 'Emergency Contact Name',
     emergencyPhone: 'Emergency Contact Phone',
     optional: 'Optional',
+    licenseNumber: 'License Number',
+    enterLicense: 'Medical License Number',
+    specialty: 'Specialty',
+    enterSpecialty: 'e.g. Cardiologist, General Physician',
+    experience: 'Years of Experience',
+    bio: 'Professional Bio',
+    professionalInfo: 'Professional Details',
+    enterBio: 'Tell us about your practice...',
+    adminId: 'Admin ID',
+    enterAdminId: 'Enter your Admin ID',
+    department: 'Department',
+    enterDepartment: 'e.g. IT, HR, Finance',
+    adminInfo: 'Admin Details',
   },
   hi: {
     welcome: 'वापसी पर स्वागत है!',
@@ -76,7 +90,7 @@ const translations = {
     loginAs: 'के रूप में लॉगिन करें',
     patient: 'मरीज',
     doctor: 'डॉक्टर',
-    admin: 'एडमिन',
+    pharmacy: 'फार्मेसी',
     demoCredentials: 'डेमो क्रेडेंशियल',
     useDemo: 'डेमो उपयोग करें',
     fullName: 'पूरा नाम',
@@ -111,6 +125,19 @@ const translations = {
     emergencyName: 'आपातकालीन संपर्क नाम',
     emergencyPhone: 'आपातकालीन संपर्क फोन',
     optional: 'वैकल्पिक',
+    licenseNumber: 'License Number',
+    enterLicense: 'Medical License Number',
+    specialty: 'Specialty',
+    enterSpecialty: 'e.g. Cardiologist, General Physician',
+    experience: 'Years of Experience',
+    bio: 'Professional Bio',
+    professionalInfo: 'Professional Details',
+    enterBio: 'Tell us about your practice...',
+    adminId: 'Admin ID',
+    enterAdminId: 'Enter your Admin ID',
+    department: 'Department',
+    enterDepartment: 'e.g. IT, HR, Finance',
+    adminInfo: 'Admin Details',
   },
   mr: {
     welcome: 'पुन्हा स्वागत!',
@@ -122,7 +149,7 @@ const translations = {
     loginAs: 'म्हणून लॉगिन करा',
     patient: 'रुग्ण',
     doctor: 'डॉक्टर',
-    admin: 'एडमिन',
+    pharmacy: 'फार्मसी',
     demoCredentials: 'डेमो क्रेडेंशियल्स',
     useDemo: 'डेमो वापरा',
     fullName: 'पूर्ण नाव',
@@ -157,6 +184,19 @@ const translations = {
     emergencyName: 'आपत्कालीन संपर्क नाव',
     emergencyPhone: 'आपत्कालीन संपर्क फोन',
     optional: 'पर्यायी',
+    licenseNumber: 'License Number',
+    enterLicense: 'Medical License Number',
+    specialty: 'Specialty',
+    enterSpecialty: 'e.g. Cardiologist, General Physician',
+    experience: 'Years of Experience',
+    bio: 'Professional Bio',
+    professionalInfo: 'Professional Details',
+    enterBio: 'Tell us about your practice...',
+    adminId: 'Admin ID',
+    enterAdminId: 'Enter your Admin ID',
+    department: 'Department',
+    enterDepartment: 'e.g. IT, HR, Finance',
+    adminInfo: 'Admin Details',
   },
   ta: {
     welcome: 'மீண்டும் வரவேற்கிறோம்!',
@@ -168,7 +208,7 @@ const translations = {
     loginAs: 'உள்நுழைக',
     patient: 'நோயாளி',
     doctor: 'மருத்துவர்',
-    admin: 'நிர்வாகி',
+    pharmacy: 'மருந்தகம்',
     demoCredentials: 'டெமோ சான்றுகள்',
     useDemo: 'டெமோ பயன்படுத்து',
     fullName: 'முழு பெயர்',
@@ -203,6 +243,19 @@ const translations = {
     emergencyName: 'அவசர தொடர்பு பெயர்',
     emergencyPhone: 'அவசர தொடர்பு எண்',
     optional: 'விருப்பமான',
+    licenseNumber: 'License Number',
+    enterLicense: 'Medical License Number',
+    specialty: 'Specialty',
+    enterSpecialty: 'e.g. Cardiologist, General Physician',
+    experience: 'Years of Experience',
+    bio: 'Professional Bio',
+    professionalInfo: 'Professional Details',
+    enterBio: 'Tell us about your practice...',
+    adminId: 'Admin ID',
+    enterAdminId: 'Enter your Admin ID',
+    department: 'Department',
+    enterDepartment: 'e.g. IT, HR, Finance',
+    adminInfo: 'Admin Details',
   },
   te: {
     welcome: 'తిరిగి స్వాగతం!',
@@ -214,7 +267,7 @@ const translations = {
     loginAs: 'గా లాగిన్ అవ్వండి',
     patient: 'రోగి',
     doctor: 'డాక్టర్',
-    admin: 'అడ్మిన్',
+    pharmacy: 'ఫార్మసీ',
     demoCredentials: 'డెమో క్రెడెన్షియల్స్',
     useDemo: 'డెమో వాడండి',
     fullName: 'పూర్తి పేరు',
@@ -249,6 +302,19 @@ const translations = {
     emergencyName: 'అత్యవసర సంప్రదింపు పేరు',
     emergencyPhone: 'అత్యవసర సంప్రదింపు ఫోన్',
     optional: 'ఐచ్ఛికం',
+    licenseNumber: 'License Number',
+    enterLicense: 'Medical License Number',
+    specialty: 'Specialty',
+    enterSpecialty: 'e.g. Cardiologist, General Physician',
+    experience: 'Years of Experience',
+    bio: 'Professional Bio',
+    professionalInfo: 'Professional Details',
+    enterBio: 'Tell us about your practice...',
+    adminId: 'Admin ID',
+    enterAdminId: 'Enter your Admin ID',
+    department: 'Department',
+    enterDepartment: 'e.g. IT, HR, Finance',
+    adminInfo: 'Admin Details',
   },
   bn: {
     welcome: 'ফিরে আসার জন্য স্বাগতম!',
@@ -260,7 +326,7 @@ const translations = {
     loginAs: 'হিসাবে লগইন করুন',
     patient: 'রোগী',
     doctor: 'ডাক্তার',
-    admin: 'অ্যাডমিন',
+    pharmacy: 'ফার্মেসি',
     demoCredentials: 'ডেমো ক্রেডেনশিয়াল',
     useDemo: 'ডেমো ব্যবহার করুন',
     fullName: 'পুরো নাম',
@@ -295,6 +361,19 @@ const translations = {
     emergencyName: 'জরুরি যোগাযোগের নাম',
     emergencyPhone: 'জরুরি যোগাযোগ ফোন',
     optional: 'ঐচ্ছিক',
+    licenseNumber: 'License Number',
+    enterLicense: 'Medical License Number',
+    specialty: 'Specialty',
+    enterSpecialty: 'e.g. Cardiologist, General Physician',
+    experience: 'Years of Experience',
+    bio: 'Professional Bio',
+    professionalInfo: 'Professional Details',
+    enterBio: 'Tell us about your practice...',
+    adminId: 'Admin ID',
+    enterAdminId: 'Enter your Admin ID',
+    department: 'Department',
+    enterDepartment: 'e.g. IT, HR, Finance',
+    adminInfo: 'Admin Details',
   },
 };
 
@@ -315,16 +394,17 @@ const demoCredentials = {
   admin: { email: 'admin@caresync.com', password: 'admin123' },
 };
 
-export function Login({ onLogin }: LoginProps) {
+export function Login({ onLogin, defaultRole }: LoginProps) {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<UserRole>('patient');
+  const [selectedRole, setSelectedRole] = useState<UserRole>(defaultRole || 'patient');
   const [language, setLanguage] = useState<Language>('en');
   const [showLangMenu, setShowLangMenu] = useState(false);
-  
+
   // Multi-step signup state
   const [signupStep, setSignupStep] = useState(1);
   const [signupData, setSignupData] = useState({
@@ -336,20 +416,46 @@ export function Login({ onLogin }: LoginProps) {
     allergies: '',
     emergencyName: '',
     emergencyPhone: '',
+    licenseNumber: '',
+    specialty: '',
+    experience: '',
+    bio: '',
+    adminId: '',
+    department: '',
+    storeName: '',
+    address: '',
+    operatingHours: '',
   });
 
   const t = translations[language];
   const totalSignupSteps = 3;
 
   const updateSignupData = (field: string, value: string) => {
-    setSignupData({ ...signupData, [field]: value });
+    if (field === 'phone' || field === 'emergencyPhone') {
+      // Only allow numbers and max 10 digits
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setSignupData({ ...signupData, [field]: numericValue });
+    } else {
+      setSignupData({ ...signupData, [field]: value });
+    }
   };
 
   const canProceedSignup = () => {
     switch (signupStep) {
       case 1:
-        return signupData.fullName && signupData.phone && email && password;
+        return (
+          signupData.fullName &&
+          signupData.phone.length === 10 &&
+          email &&
+          password
+        );
       case 2:
+        if (selectedRole === 'doctor') {
+          return signupData.licenseNumber && signupData.specialty && signupData.experience;
+        }
+        if (selectedRole === 'pharmacy') {
+          return signupData.storeName && signupData.address;
+        }
         return signupData.gender && signupData.bloodGroup;
       default:
         return true;
@@ -358,23 +464,23 @@ export function Login({ onLogin }: LoginProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isLogin && signupStep < totalSignupSteps) {
       setSignupStep(signupStep + 1);
       return;
     }
-    
+
     setIsLoading(true);
 
     try {
       if (isLogin) {
         // LOGIN logic
         const response = await api.post('/auth/login', { email, password });
-        
+
         // Store user data
         localStorage.setItem('user', JSON.stringify(response.data));
         toast.success(`Welcome back, ${response.data.name}!`);
-        
+
         // Use the role from the response, but if the user selected a different role in UI, warn them or just use response role.
         // For now, we trust the backend's role.
         onLogin(response.data.role as UserRole);
@@ -393,14 +499,19 @@ export function Login({ onLogin }: LoginProps) {
           emergencyContact: {
             name: signupData.emergencyName,
             phone: signupData.emergencyPhone
-          }
+          },
+          // Doctor fields
+          licenseNumber: signupData.licenseNumber,
+          specialty: signupData.specialty,
+          experience: signupData.experience,
+          bio: signupData.bio,
         };
-        
+
         const response = await api.post('/auth/register', registerData);
-        
+
         localStorage.setItem('user', JSON.stringify(response.data));
         localStorage.setItem('onboardingComplete', 'true'); // They just did it
-        
+
         toast.success('Account created successfully! 🎉');
         onLogin(response.data.role as UserRole);
       }
@@ -441,7 +552,7 @@ export function Login({ onLogin }: LoginProps) {
             <Globe size={18} className="text-primary" />
             <span className="font-medium text-sm">{languageNames[language]}</span>
           </button>
-          
+
           {showLangMenu && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -467,7 +578,7 @@ export function Login({ onLogin }: LoginProps) {
       </div>
 
       {/* Left Panel */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary/90 to-teal-600 p-12 flex-col justify-between relative overflow-hidden"
@@ -507,7 +618,7 @@ export function Login({ onLogin }: LoginProps) {
 
       {/* Right Panel */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background overflow-y-auto">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md space-y-6"
@@ -591,20 +702,23 @@ export function Login({ onLogin }: LoginProps) {
             </div>
           )}
 
-          {/* Role Selection (Login only) */}
-          {isLogin && (
+          {/* Role Selection - Show for signup mode or when no defaultRole */}
+          {(!defaultRole || !isLogin) && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
               <p className="text-sm font-medium text-center">{t.loginAs}</p>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { role: 'patient' as UserRole, icon: Users, label: t.patient },
                   { role: 'doctor' as UserRole, icon: Stethoscope, label: t.doctor },
-                  { role: 'admin' as UserRole, icon: Pill, label: t.admin },
+                  { role: 'pharmacy' as UserRole, icon: Pill, label: t.pharmacy },
                 ].map(({ role, icon: Icon, label }) => (
                   <button
                     key={role}
                     type="button"
-                    onClick={() => setSelectedRole(role)}
+                    onClick={() => {
+                      setSelectedRole(role);
+                      navigate(`/login/${role}`);
+                    }}
                     className={cn(
                       "p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1",
                       selectedRole === role
@@ -620,19 +734,10 @@ export function Login({ onLogin }: LoginProps) {
                 ))}
               </div>
 
-              <div className="p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-medium text-muted-foreground">{t.demoCredentials}</p>
-                  <button type="button" onClick={fillDemo} className="text-xs text-primary hover:underline font-medium">
-                    {t.useDemo}
-                  </button>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  <strong>Email:</strong> {demoCredentials[selectedRole].email} | <strong>Pass:</strong> {demoCredentials[selectedRole].password}
-                </div>
-              </div>
+
             </motion.div>
           )}
+
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -769,8 +874,8 @@ export function Login({ onLogin }: LoginProps) {
                 </motion.div>
               )}
 
-              {/* Signup Step 2: Health Info */}
-              {!isLogin && signupStep === 2 && (
+              {/* Signup Step 2: Patient Health Info */}
+              {!isLogin && signupStep === 2 && selectedRole === 'patient' && (
                 <motion.div
                   key="signup2"
                   initial={{ opacity: 0, x: 20 }}
@@ -850,8 +955,102 @@ export function Login({ onLogin }: LoginProps) {
                 </motion.div>
               )}
 
-              {/* Signup Step 3: Emergency Contact */}
-              {!isLogin && signupStep === 3 && (
+              {/* Signup Step 2: Doctor Professional Details */}
+              {!isLogin && signupStep === 2 && selectedRole === 'doctor' && (
+                <motion.div
+                  key="signup2-doctor"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                    <Stethoscope size={18} className="text-blue-500" />
+                    <span className="font-medium text-sm">{t.professionalInfo}</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t.licenseNumber} *</Label>
+                    <Input
+                      placeholder={t.enterLicense}
+                      value={signupData.licenseNumber}
+                      onChange={(e) => updateSignupData('licenseNumber', e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t.specialty} *</Label>
+                    <Input
+                      placeholder={t.enterSpecialty}
+                      value={signupData.specialty}
+                      onChange={(e) => updateSignupData('specialty', e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t.experience} *</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 10"
+                      value={signupData.experience}
+                      onChange={(e) => updateSignupData('experience', e.target.value)}
+                      className="h-12"
+                      min="0"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Signup Step 2: Pharmacy Store Details */}
+              {!isLogin && signupStep === 2 && selectedRole === 'pharmacy' && (
+                <motion.div
+                  key="signup2-pharmacy"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                    <Pill size={18} className="text-green-600" />
+                    <span className="font-medium text-sm">{t.adminInfo}</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t.storeName || 'Store Name'} *</Label>
+                    <Input
+                      placeholder={t.enterStoreName || 'Enter your store name'}
+                      value={signupData.storeName || ''}
+                      onChange={(e) => updateSignupData('storeName', e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t.address || 'Store Address'} *</Label>
+                    <Input
+                      placeholder={t.enterAddress || 'Enter complete address'}
+                      value={signupData.address || ''}
+                      onChange={(e) => updateSignupData('address', e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t.operatingHours || 'Operating Hours'}</Label>
+                    <Input
+                      placeholder={t.enterOperatingHours || 'e.g., 9 AM - 9 PM'}
+                      value={signupData.operatingHours || ''}
+                      onChange={(e) => updateSignupData('operatingHours', e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Signup Step 3: Patient Emergency Contact */}
+              {!isLogin && signupStep === 3 && selectedRole === 'patient' && (
                 <motion.div
                   key="signup3"
                   initial={{ opacity: 0, x: 20 }}
@@ -905,6 +1104,43 @@ export function Login({ onLogin }: LoginProps) {
                   </div>
                 </motion.div>
               )}
+
+
+              {/* Signup Step 3: Doctor Bio */}
+              {!isLogin && signupStep === 3 && selectedRole === 'doctor' && (
+                <motion.div
+                  key="signup3-doctor"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                    <Stethoscope size={18} className="text-blue-500" />
+                    <span className="font-medium text-sm">{t.bio}</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t.bio}</Label>
+                    <textarea
+                      placeholder={t.enterBio}
+                      value={signupData.bio}
+                      onChange={(e) => updateSignupData('bio', e.target.value)}
+                      className="w-full min-h-[120px] p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl border border-primary/10">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <CheckCircle size={16} className="text-green-500" />
+                      Almost done!
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Click below to submit your application for verification.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
 
             {/* Navigation Buttons */}
@@ -920,9 +1156,9 @@ export function Login({ onLogin }: LoginProps) {
                   {t.back}
                 </Button>
               )}
-              
-              <Button 
-                type="submit" 
+
+              <Button
+                type="submit"
                 className="flex-1 h-12 btn-hero text-base"
                 disabled={isLoading || (!isLogin && !canProceedSignup())}
               >
@@ -939,36 +1175,38 @@ export function Login({ onLogin }: LoginProps) {
           </form>
 
           {/* Social Login - Only for login */}
-          {isLogin && (
-            <>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border" />
+          {
+            isLogin && (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">{t.orContinueWith}</span>
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">{t.orContinueWith}</span>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="h-12" type="button">
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  Google
-                </Button>
-                <Button variant="outline" className="h-12" type="button">
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
-                  </svg>
-                  GitHub
-                </Button>
-              </div>
-            </>
-          )}
+                <div className="grid grid-cols-2 gap-4">
+                  <Button variant="outline" className="h-12" type="button">
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                      <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    Google
+                  </Button>
+                  <Button variant="outline" className="h-12" type="button">
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                    </svg>
+                    GitHub
+                  </Button>
+                </div>
+              </>
+            )
+          }
 
           {/* Terms */}
           <p className="text-center text-xs text-muted-foreground">
@@ -977,9 +1215,9 @@ export function Login({ onLogin }: LoginProps) {
             {' '}{t.and}{' '}
             <a href="#" className="text-primary hover:underline">{t.privacyLink}</a>
           </p>
-        </motion.div>
-      </div>
-    </div>
+        </motion.div >
+      </div >
+    </div >
   );
 }
 

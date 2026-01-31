@@ -22,14 +22,20 @@ const userSchema = mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['patient', 'doctor', 'admin'],
+      enum: ['patient', 'doctor', 'pharmacy'],
       default: 'patient',
     },
     // Doctor specific fields
     specialty: { type: String },
     experience: { type: Number },
     bio: { type: String },
-    
+    licenseNumber: { type: String },
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: 'pending',
+    },
+
     // Patient specific fields
     dateOfBirth: { type: Date },
     gender: { type: String },
@@ -39,6 +45,24 @@ const userSchema = mongoose.Schema(
       phone: { type: String },
     },
     allergies: { type: String },
+
+    // Pharmacy/Medical Store specific fields
+    storeName: { type: String },
+    storeLicense: { type: String },
+    gstNumber: { type: String },
+    operatingHours: { type: String },
+    address: { type: String },
+    location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        default: [0, 0],
+      },
+    },
   },
   {
     timestamps: true,
