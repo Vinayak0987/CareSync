@@ -26,26 +26,6 @@ interface DoctorAppointment {
   notes?: string;
 }
 
-// Default mock appointment for demo consultation
-const defaultMockAppointment: DoctorAppointment = {
-  id: 'demo-consultation',
-  patientId: 'demo-patient',
-  patientName: 'Demo Patient',
-  patientAvatar: 'https://ui-avatars.com/api/?name=Demo+Patient&background=0D9488&color=fff',
-  patientEmail: 'demo.patient@email.com',
-  patientPhone: '9876543210',
-  age: 35,
-  gender: 'Male',
-  bloodGroup: 'O+',
-  allergies: 'Penicillin',
-  time: '10:00 AM',
-  date: new Date().toISOString(),
-  reason: 'Demo consultation - General checkup',
-  status: 'in-progress',
-  conditions: ['Hypertension', 'Diabetes'],
-  notes: 'This is a demo consultation'
-};
-
 interface DoctorIndexProps {
   onLogout: () => void;
 }
@@ -76,13 +56,18 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
       case 'appointments':
         return <DoctorAppointments />;
       case 'consultation':
-        // Use current appointment if set, otherwise use mock appointment for demo
-        const appointment = currentAppointment || defaultMockAppointment;
+        if (currentAppointment) {
+          return (
+            <DoctorConsultation
+              appointment={currentAppointment}
+              onEndCall={handleEndCall}
+            />
+          );
+        }
         return (
-          <DoctorConsultation
-            appointment={appointment}
-            onEndCall={handleEndCall}
-          />
+          <div className="flex items-center justify-center h-64 text-muted-foreground">
+            <p>No active consultation. Start a call from the dashboard.</p>
+          </div>
         );
       case 'patients':
         return <PatientHistory />;
@@ -112,4 +97,3 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
 };
 
 export default DoctorIndex;
-

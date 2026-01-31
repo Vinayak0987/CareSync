@@ -15,15 +15,7 @@ import {
   Heart,
   Droplets
 } from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from 'recharts';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -61,75 +53,10 @@ interface DoctorConsultationProps {
   onEndCall: () => void;
 }
 
-// Local mock data for consultation
-const mockVitalsHistory = [
-  { date: 'Mon', systolic: 128, diastolic: 82, heartRate: 74, bloodSugar: 112 },
-  { date: 'Tue', systolic: 125, diastolic: 80, heartRate: 72, bloodSugar: 108 },
-  { date: 'Wed', systolic: 130, diastolic: 85, heartRate: 76, bloodSugar: 115 },
-  { date: 'Thu', systolic: 122, diastolic: 78, heartRate: 70, bloodSugar: 105 },
-  { date: 'Fri', systolic: 126, diastolic: 82, heartRate: 73, bloodSugar: 110 },
-  { date: 'Sat', systolic: 124, diastolic: 80, heartRate: 71, bloodSugar: 102 },
-  { date: 'Sun', systolic: 120, diastolic: 78, heartRate: 72, bloodSugar: 98 },
-];
-
-const mockPrescriptions = [
-  {
-    id: '1',
-    date: '15 Jan 2026',
-    diagnosis: 'Seasonal Flu',
-    doctorName: 'Dr. Sharma',
-    medicines: [
-      { name: 'Paracetamol', dosage: '500mg' },
-      { name: 'Cetirizine', dosage: '10mg' },
-    ],
-  },
-  {
-    id: '2',
-    date: '02 Dec 2025',
-    diagnosis: 'Hypertension Management',
-    doctorName: 'Dr. Patel',
-    medicines: [
-      { name: 'Amlodipine', dosage: '5mg' },
-      { name: 'Metoprolol', dosage: '25mg' },
-    ],
-  },
-  {
-    id: '3',
-    date: '10 Oct 2025',
-    diagnosis: 'Type 2 Diabetes',
-    doctorName: 'Dr. Gupta',
-    medicines: [
-      { name: 'Metformin', dosage: '500mg' },
-      { name: 'Glimepiride', dosage: '1mg' },
-    ],
-  },
-];
-
-const initialChatMessages: ChatMessage[] = [
-  {
-    id: '1',
-    sender: 'doctor',
-    message: 'Hello! How are you feeling today?',
-    timestamp: '10:30 AM'
-  },
-  {
-    id: '2',
-    sender: 'patient',
-    message: 'Hi Doctor, I have been having some headaches for the past 3 days.',
-    timestamp: '10:31 AM'
-  },
-  {
-    id: '3',
-    sender: 'doctor',
-    message: 'I see. Can you describe the nature of the headache? Is it throbbing, constant, or intermittent?',
-    timestamp: '10:32 AM'
-  },
-];
-
 export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultationProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState<'vitals' | 'history' | 'prescription'>('vitals');
   const [callDuration, setCallDuration] = useState(0);
@@ -190,32 +117,12 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
 
     setMessages([...messages, message]);
     setNewMessage('');
-
-    // Simulate patient response after a delay
-    setTimeout(() => {
-      const responses = [
-        "Thank you doctor, I will follow your advice.",
-        "Yes, I understand. Should I take any precautions?",
-        "I've been taking my medications regularly.",
-        "The symptoms have been improving slightly."
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        sender: 'patient',
-        message: randomResponse,
-        timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-      }]);
-    }, 2000);
   };
 
   const handleIssuePrescription = (prescription: { diagnosis: string; medicines: any[]; advice: string }) => {
     console.log('Prescription issued:', prescription);
     // In a real app, this would save to the database
   };
-
-  // Get latest vitals
-  const latestVitals = mockVitalsHistory[mockVitalsHistory.length - 1];
 
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col lg:flex-row gap-4">
@@ -310,28 +217,34 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto p-3 space-y-3"
           >
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={cn(
-                  "flex",
-                  msg.sender === 'doctor' ? "justify-end" : "justify-start"
-                )}
-              >
-                <div className={cn(
-                  "max-w-[80%] px-3 py-2 rounded-xl text-sm",
-                  msg.sender === 'doctor'
-                    ? "bg-primary text-white rounded-br-none"
-                    : "bg-muted rounded-bl-none"
-                )}>
-                  <p>{msg.message}</p>
-                  <p className={cn(
-                    "text-[10px] mt-1",
-                    msg.sender === 'doctor' ? "text-white/70" : "text-muted-foreground"
-                  )}>{msg.timestamp}</p>
-                </div>
+            {messages.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                <p>No messages yet</p>
               </div>
-            ))}
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={cn(
+                    "flex",
+                    msg.sender === 'doctor' ? "justify-end" : "justify-start"
+                  )}
+                >
+                  <div className={cn(
+                    "max-w-[80%] px-3 py-2 rounded-xl text-sm",
+                    msg.sender === 'doctor'
+                      ? "bg-primary text-white rounded-br-none"
+                      : "bg-muted rounded-bl-none"
+                  )}>
+                    <p>{msg.message}</p>
+                    <p className={cn(
+                      "text-[10px] mt-1",
+                      msg.sender === 'doctor' ? "text-white/70" : "text-muted-foreground"
+                    )}>{msg.timestamp}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Input */}
@@ -427,18 +340,8 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
                 <Activity size={14} className="text-primary" />
                 Vitals History (7 Days)
               </h4>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={mockVitalsHistory}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#9ca3af" />
-                    <YAxis tick={{ fontSize: 10 }} stroke="#9ca3af" domain={[60, 150]} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="systolic" stroke="#f43f5e" strokeWidth={2} dot={{ r: 3 }} name="Systolic" />
-                    <Line type="monotone" dataKey="diastolic" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} name="Diastolic" />
-                    <Line type="monotone" dataKey="heartRate" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} name="Heart Rate" />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="h-48 flex items-center justify-center border border-dashed rounded-lg">
+                <span className="text-muted-foreground text-sm">No vitals data available</span>
               </div>
 
               {/* Quick Vitals */}
@@ -448,25 +351,25 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
                     <Heart size={12} className="text-rose-500" />
                     Blood Pressure
                   </p>
-                  <p className="font-display font-bold text-lg">{latestVitals.systolic}/{latestVitals.diastolic}</p>
+                  <p className="font-display font-bold text-lg">--/--</p>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg">
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Droplets size={12} className="text-blue-500" />
                     Blood Sugar
                   </p>
-                  <p className="font-display font-bold text-lg">{latestVitals.bloodSugar} mg/dL</p>
+                  <p className="font-display font-bold text-lg">-- mg/dL</p>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg">
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Activity size={12} className="text-emerald-500" />
                     Heart Rate
                   </p>
-                  <p className="font-display font-bold text-lg">{latestVitals.heartRate} bpm</p>
+                  <p className="font-display font-bold text-lg">-- bpm</p>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg">
                   <p className="text-xs text-muted-foreground">SpO2</p>
-                  <p className="font-display font-bold text-lg">98%</p>
+                  <p className="font-display font-bold text-lg">--%</p>
                 </div>
               </div>
             </div>
@@ -478,29 +381,10 @@ export function DoctorConsultation({ appointment, onEndCall }: DoctorConsultatio
                 <FileText size={14} className="text-primary" />
                 Past Prescriptions
               </h4>
-              {mockPrescriptions.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText size={32} className="mx-auto mb-2 opacity-30" />
-                  <p>No prescription history</p>
-                </div>
-              ) : (
-                mockPrescriptions.map((rx) => (
-                  <div key={rx.id} className="p-3 bg-muted/50 rounded-lg space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-sm">{rx.diagnosis}</p>
-                      <span className="text-xs text-muted-foreground">{rx.date}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">By {rx.doctorName}</p>
-                    <div className="flex flex-wrap gap-1">
-                      {rx.medicines.map((med) => (
-                        <span key={med.name} className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] rounded-full">
-                          {med.name} {med.dosage}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText size={32} className="mx-auto mb-2 opacity-30" />
+                <p>No prescription history</p>
+              </div>
             </div>
           )}
 

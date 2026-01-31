@@ -53,82 +53,6 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
 
-  // Mock appointments for demo/fallback when no real data
-  const mockAppointments: DoctorAppointment[] = [
-    {
-      id: 'mock-1',
-      patientId: 'patient-1',
-      patientName: 'Rahul Sharma',
-      patientAvatar: 'https://ui-avatars.com/api/?name=Rahul+Sharma&background=0D9488&color=fff',
-      patientEmail: 'rahul.sharma@email.com',
-      patientPhone: '9876543210',
-      age: 35,
-      gender: 'Male',
-      bloodGroup: 'O+',
-      allergies: 'Penicillin',
-      time: '10:00 AM',
-      date: new Date().toISOString(),
-      reason: 'Routine checkup and blood pressure monitoring',
-      status: 'waiting',
-      conditions: ['Hypertension', 'Diabetes'],
-      notes: ''
-    },
-    {
-      id: 'mock-2',
-      patientId: 'patient-2',
-      patientName: 'Priya Patel',
-      patientAvatar: 'https://ui-avatars.com/api/?name=Priya+Patel&background=8B5CF6&color=fff',
-      patientEmail: 'priya.patel@email.com',
-      patientPhone: '9876543211',
-      age: 28,
-      gender: 'Female',
-      bloodGroup: 'A+',
-      allergies: '',
-      time: '11:30 AM',
-      date: new Date().toISOString(),
-      reason: 'Follow-up consultation for migraine',
-      status: 'confirmed',
-      conditions: ['Migraine'],
-      notes: ''
-    },
-    {
-      id: 'mock-3',
-      patientId: 'patient-3',
-      patientName: 'Arun Kumar',
-      patientAvatar: 'https://ui-avatars.com/api/?name=Arun+Kumar&background=F43F5E&color=fff',
-      patientEmail: 'arun.kumar@email.com',
-      patientPhone: '9876543212',
-      age: 45,
-      gender: 'Male',
-      bloodGroup: 'B+',
-      allergies: 'Sulfa drugs',
-      time: '02:00 PM',
-      date: new Date().toISOString(),
-      reason: 'Chest pain evaluation',
-      status: 'waiting',
-      conditions: ['Heart Disease', 'High Cholesterol'],
-      notes: 'Patient reported discomfort during exercise'
-    },
-    {
-      id: 'mock-4',
-      patientId: 'patient-4',
-      patientName: 'Sneha Reddy',
-      patientAvatar: 'https://ui-avatars.com/api/?name=Sneha+Reddy&background=10B981&color=fff',
-      patientEmail: 'sneha.reddy@email.com',
-      patientPhone: '9876543213',
-      age: 32,
-      gender: 'Female',
-      bloodGroup: 'AB+',
-      allergies: '',
-      time: '03:30 PM',
-      date: new Date().toISOString(),
-      reason: 'Annual health checkup',
-      status: 'confirmed',
-      conditions: [],
-      notes: ''
-    }
-  ];
-
   // Fetch today's appointments
   useEffect(() => {
     const fetchData = async () => {
@@ -139,20 +63,11 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
           api.get('/appointments/today'),
           api.get('/appointments/stats')
         ]);
-        // Use mock data if API returns empty
-        const apiAppointments = appointmentsRes.data;
-        if (apiAppointments.length === 0) {
-          setAppointments(mockAppointments);
-          setStats({ today: { total: 4, completed: 0 }, week: { total: 12, completed: 8 } });
-        } else {
-          setAppointments(apiAppointments);
-          setStats(statsRes.data);
-        }
+        setAppointments(appointmentsRes.data);
+        setStats(statsRes.data);
       } catch (err: any) {
         console.error('Error fetching dashboard data:', err);
-        // Use mock data on error for demo purposes
-        setAppointments(mockAppointments);
-        setStats({ today: { total: 4, completed: 0 }, week: { total: 12, completed: 8 } });
+        setError(err.response?.data?.message || 'Failed to load dashboard data');
       } finally {
         setIsLoading(false);
       }
