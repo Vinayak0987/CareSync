@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { FloatingLanguageSwitcher } from '@/components/layout/FloatingLanguageSwitcher';
+
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { ProductsManager } from '@/components/admin/ProductsManager';
 import { OrdersManager } from '@/components/admin/OrdersManager';
@@ -44,8 +44,7 @@ const AdminIndex = ({ onLogout }: AdminIndexProps) => {
         </div>
       </main>
       
-      {/* Floating Language Switcher - Bottom Right */}
-      <FloatingLanguageSwitcher />
+
     </div>
   );
 };

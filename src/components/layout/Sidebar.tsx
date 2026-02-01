@@ -28,18 +28,6 @@ interface SidebarProps {
 export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { t } = useLanguage();
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        setUser(JSON.parse(userStr));
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-      }
-    }
-  }, []);
 
   const navItems = [
     { id: 'home', label: t('dashboard'), icon: Home },
@@ -76,7 +64,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed lg:static inset-y-0 left-0 z-40 w-64 bg-sidebar border-r border-sidebar-border",
+        "fixed lg:sticky lg:top-0 h-screen inset-y-0 left-0 z-40 w-64 bg-sidebar border-r border-sidebar-border",
         "transform transition-transform duration-300 lg:transform-none",
         isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
@@ -86,12 +74,9 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
+              className="flex items-center gap-2"
             >
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <Heart className="w-6 h-6 text-primary-foreground" fill="currentColor" />
-              </div>
-              <span className="text-xl font-display font-bold gradient-text">CareSync</span>
+                <img src="/CareSyncLogo.png" alt="CareSync Logo" className="h-28 w-auto object-contain" />
             </motion.div>
           </div>
 
@@ -121,14 +106,14 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
           {/* User Profile */}
           <div className="p-4 border-t border-sidebar-border">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent">
-              <img
-                src={displayAvatar}
-                alt={displayName}
+              <img 
+                src={currentPatient.avatar} 
+                alt={currentPatient.name}
                 className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/20"
               />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{displayName}</p>
-                <p className="text-xs text-muted-foreground capitalize">{displayRole}</p>
+                <p className="font-medium text-sm truncate">{currentPatient.name}</p>
+                <p className="text-xs text-muted-foreground">{t('patient')}</p>
               </div>
               <button
                 onClick={onLogout}

@@ -9,6 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import {
+  validatePhoneNumber,
+  validateFullName,
+  validateDateOfBirth,
+} from '@/lib/validations';
 
 interface OnboardingProps {
   onComplete: (userData: UserProfile) => void;
@@ -51,10 +56,37 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     conditions: [],
   });
 
+  // Validation errors
+  const [errors, setErrors] = useState({
+    fullName: '',
+    phone: '',
+    dateOfBirth: '',
+    emergencyPhone: '',
+  });
+
   const totalSteps = 4;
 
   const updateProfile = (field: keyof UserProfile, value: string | string[]) => {
     setProfile({ ...profile, [field]: value });
+    
+    // Real-time validation
+    if (field === 'fullName' && typeof value === 'string') {
+      const validation = validateFullName(value);
+      setErrors(prev => ({ ...prev, fullName: validation.error || '' }));
+    } else if (field === 'phone' && typeof value === 'string') {
+      const cleanedPhone = value.replace(/\D/g, '').slice(0, 10);
+      setProfile({ ...profile, [field]: cleanedPhone });
+      const validation = validatePhoneNumber(cleanedPhone);
+      setErrors(prev => ({ ...prev, phone: validation.error || '' }));
+    } else if (field === 'dateOfBirth' && typeof value === 'string') {
+      const validation = validateDateOfBirth(value);
+      setErrors(prev => ({ ...prev, dateOfBirth: validation.error || '' }));
+    } else if (field === 'emergencyPhone' && typeof value === 'string') {
+      const cleanedPhone = value.replace(/\D/g, '').slice(0, 10);
+      setProfile({ ...profile, [field]: cleanedPhone });
+      const validation = validatePhoneNumber(cleanedPhone);
+      setErrors(prev => ({ ...prev, emergencyPhone: validation.error || '' }));
+    }
   };
 
   const toggleCondition = (condition: string) => {
@@ -73,11 +105,22 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const canProceed = () => {
     switch (step) {
       case 1:
-        return profile.fullName && profile.phone && profile.dateOfBirth;
+        return (
+          profile.fullName &&
+          !errors.fullName &&
+          profile.phone &&
+          !errors.phone &&
+          profile.dateOfBirth &&
+          !errors.dateOfBirth
+        );
       case 2:
         return profile.gender && profile.bloodGroup;
       case 3:
-        return profile.emergencyContact && profile.emergencyPhone;
+        return (
+          profile.emergencyContact &&
+          profile.emergencyPhone &&
+          !errors.emergencyPhone
+        );
       default:
         return true;
     }
@@ -153,8 +196,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     placeholder="Enter your full name"
                     value={profile.fullName}
                     onChange={(e) => updateProfile('fullName', e.target.value)}
-                    className="h-12"
+                    className={cn(
+                      "h-12",
+                      errors.fullName && "border-red-500 focus-visible:ring-red-500"
+                    )}
                   />
+                  {errors.fullName && (
+                    <div className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                      <AlertCircle size={12} />
+                      <span>{errors.fullName}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -164,8 +216,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     placeholder="+91 98765 43210"
                     value={profile.phone}
                     onChange={(e) => updateProfile('phone', e.target.value)}
-                    className="h-12"
+                    className={cn(
+                      "h-12",
+                      errors.phone && "border-red-500 focus-visible:ring-red-500"
+                    )}
                   />
+                  {errors.phone && (
+                    <div className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                      <AlertCircle size={12} />
+                      <span>{errors.phone}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -174,8 +235,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     type="date"
                     value={profile.dateOfBirth}
                     onChange={(e) => updateProfile('dateOfBirth', e.target.value)}
-                    className="h-12"
+                    className={cn(
+                      "h-12",
+                      errors.dateOfBirth && "border-red-500 focus-visible:ring-red-500"
+                    )}
                   />
+                  {errors.dateOfBirth && (
+                    <div className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                      <AlertCircle size={12} />
+                      <span>{errors.dateOfBirth}</span>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -295,8 +365,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     placeholder="+91 98765 43210"
                     value={profile.emergencyPhone}
                     onChange={(e) => updateProfile('emergencyPhone', e.target.value)}
-                    className="h-12"
+                    className={cn(
+                      "h-12",
+                      errors.emergencyPhone && "border-red-500 focus-visible:ring-red-500"
+                    )}
                   />
+                  {errors.emergencyPhone && (
+                    <div className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                      <AlertCircle size={12} />
+                      <span>{errors.emergencyPhone}</span>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
