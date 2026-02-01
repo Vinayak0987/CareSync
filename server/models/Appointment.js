@@ -22,15 +22,43 @@ const appointmentSchema = mongoose.Schema(
     },
     reason: {
       type: String,
-      required: true,
+      default: 'General Checkup',
     },
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'waiting', 'in-progress', 'completed', 'cancelled'],
-      default: 'confirmed', // Auto-confirm for now
+      default: 'confirmed',
     },
     notes: {
       type: String,
+    },
+    // Voice booking tracking
+    bookedVia: {
+      type: String,
+      enum: ['web', 'voice_call', 'mobile_app'],
+      default: 'web',
+    },
+    // Reminder tracking
+    reminderSent: {
+      type: Boolean,
+      default: false,
+    },
+    reminderSentAt: {
+      type: Date,
+    },
+    reminderConfirmed: {
+      type: Boolean,
+      default: false,
+    },
+    reminderConfirmedAt: {
+      type: Date,
+    },
+    hourlyReminderSent: {
+      type: Boolean,
+      default: false,
+    },
+    hourlyReminderSentAt: {
+      type: Date,
     },
   },
   {

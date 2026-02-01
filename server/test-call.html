@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Voice Agent</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .phone-icon {
+            text-align: center;
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 206, 201, 0.4);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        .status.success {
+            display: block;
+            background: rgba(0, 184, 148, 0.3);
+            border: 1px solid #00b894;
+        }
+        .status.error {
+            display: block;
+            background: rgba(255, 107, 107, 0.3);
+            border: 1px solid #ff6b6b;
+        }
+        .info {
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="phone-icon">📞</div>
+        <h1>CareSync Voice Agent Test</h1>
+        
+        <input type="tel" id="phoneNumber" placeholder="Enter your phone number" value="8451851153">
+        
+        <button id="callBtn" onclick="initiateCall()">
+            🔔 Call Me Now
+        </button>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="info">
+            You will receive a call from +1 (575) 228-7517<br>
+            Answer to test the IVR system!
+        </div>
+    </div>
+
+    <script>
+        async function initiateCall() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const btn = document.getElementById('callBtn');
+            const status = document.getElementById('status');
+            
+            if (!phoneNumber) {
+                alert('Please enter your phone number');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '📞 Calling...';
+            status.style.display = 'none';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/voice/initiate-call', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ phoneNumber })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.className = 'status success';
+                    status.innerHTML = '✅ Call initiated! Pick up your phone!<br><small>Call SID: ' + data.callSid + '</small>';
+                } else {
+                    status.className = 'status error';
+                    status.textContent = '❌ Error: ' + data.error;
+                }
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ Error: ' + error.message + '. Make sure server is running!';
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '🔔 Call Me Now';
+        }
+    </script>
+</body>
+</html>
