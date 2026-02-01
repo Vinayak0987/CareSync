@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone,
   Stethoscope, Users, Pill, Globe, Calendar, Droplet, CheckCircle, Shield,
-  FileText, Upload
+  FileText, Upload, AlertCircle
 } from 'lucide-react';
 import {
   Select,
@@ -19,6 +19,19 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import {
+  validateEmail,
+  validatePassword,
+  validatePhoneNumber,
+  validateFullName,
+  validateDateOfBirth,
+  validateLicenseNumber,
+  validateSpecialty,
+  validateExperience,
+  validateStoreName,
+  validateAddress,
+  getPasswordStrength,
+} from '@/lib/validations';
 
 type UserRole = 'patient' | 'doctor' | 'pharmacy';
 type Language = 'en' | 'hi' | 'mr' | 'ta' | 'te' | 'bn';
@@ -419,6 +432,21 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
   const [language, setLanguage] = useState<Language>('en');
   const [showLangMenu, setShowLangMenu] = useState(false);
 
+  // Validation error states
+  const [errors, setErrors] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+    phone: '',
+    dateOfBirth: '',
+    emergencyPhone: '',
+    licenseNumber: '',
+    specialty: '',
+    experience: '',
+    storeName: '',
+    address: '',
+  });
+
   // Multi-step signup state
   const [signupStep, setSignupStep] = useState(1);
   const [signupData, setSignupData] = useState({
@@ -453,8 +481,40 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
       // Only allow numbers and max 10 digits
       const numericValue = String(value).replace(/\D/g, '').slice(0, 10);
       setSignupData({ ...signupData, [field]: numericValue });
+      
+      // Validate phone number
+      if (numericValue) {
+        const validation = validatePhoneNumber(numericValue);
+        setErrors(prev => ({ ...prev, [field]: validation.error || '' }));
+      } else {
+        setErrors(prev => ({ ...prev, [field]: '' }));
+      }
     } else {
       setSignupData({ ...signupData, [field]: value });
+      
+      // Validate specific fields
+      if (field === 'fullName' && value) {
+        const validation = validateFullName(value);
+        setErrors(prev => ({ ...prev, fullName: validation.error || '' }));
+      } else if (field === 'dateOfBirth' && value) {
+        const validation = validateDateOfBirth(value);
+        setErrors(prev => ({ ...prev, dateOfBirth: validation.error || '' }));
+      } else if (field === 'licenseNumber' && value) {
+        const validation = validateLicenseNumber(value);
+        setErrors(prev => ({ ...prev, licenseNumber: validation.error || '' }));
+      } else if (field === 'specialty' && value) {
+        const validation = validateSpecialty(value);
+        setErrors(prev => ({ ...prev, specialty: validation.error || '' }));
+      } else if (field === 'experience' && value) {
+        const validation = validateExperience(value);
+        setErrors(prev => ({ ...prev, experience: validation.error || '' }));
+      } else if (field === 'storeName' && value) {
+        const validation = validateStoreName(value);
+        setErrors(prev => ({ ...prev, storeName: validation.error || '' }));
+      } else if (field === 'address' && value) {
+        const validation = validateAddress(value);
+        setErrors(prev => ({ ...prev, address: validation.error || '' }));
+      }
     }
   };
 
@@ -463,16 +523,32 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
       case 1:
         return (
           signupData.fullName &&
+          !errors.fullName &&
           signupData.phone.length === 10 &&
+          !errors.phone &&
           email &&
-          password
+          !errors.email &&
+          password &&
+          !errors.password
         );
       case 2:
         if (selectedRole === 'doctor') {
-          return signupData.licenseNumber && signupData.specialty && signupData.experience;
+          return (
+            signupData.licenseNumber &&
+            !errors.licenseNumber &&
+            signupData.specialty &&
+            !errors.specialty &&
+            signupData.experience &&
+            !errors.experience
+          );
         }
         if (selectedRole === 'pharmacy') {
-          return signupData.storeName && signupData.address;
+          return (
+            signupData.storeName &&
+            !errors.storeName &&
+            signupData.address &&
+            !errors.address
+          );
         }
         return signupData.gender && signupData.bloodGroup;
       default:
@@ -559,49 +635,42 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
   const switchToSignup = () => {
     setIsLogin(false);
     setSignupStep(1);
+    setErrors({
+      email: '',
+      password: '',
+      fullName: '',
+      phone: '',
+      dateOfBirth: '',
+      emergencyPhone: '',
+      licenseNumber: '',
+      specialty: '',
+      experience: '',
+      storeName: '',
+      address: '',
+    });
   };
 
   const switchToLogin = () => {
     setIsLogin(true);
     setSignupStep(1);
+    setErrors({
+      email: '',
+      password: '',
+      fullName: '',
+      phone: '',
+      dateOfBirth: '',
+      emergencyPhone: '',
+      licenseNumber: '',
+      specialty: '',
+      experience: '',
+      storeName: '',
+      address: '',
+    });
   };
 
   return (
     <div className="min-h-screen flex">
-      {/* Language Selector */}
-      <div className="fixed top-4 right-4 z-50">
-        <div className="relative">
-          <button
-            onClick={() => setShowLangMenu(!showLangMenu)}
-            className="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl border border-border shadow-lg hover:shadow-xl transition-all"
-          >
-            <Globe size={18} className="text-primary" />
-            <span className="font-medium text-sm">{languageNames[language]}</span>
-          </button>
-
-          {showLangMenu && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="absolute right-0 mt-2 w-40 bg-white rounded-xl border border-border shadow-xl overflow-hidden"
-            >
-              {(Object.keys(languageNames) as Language[]).map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => { setLanguage(lang); setShowLangMenu(false); }}
-                  className={cn(
-                    "w-full px-4 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center justify-between",
-                    language === lang && "bg-primary/5 text-primary font-medium"
-                  )}
-                >
-                  {languageNames[lang]}
-                  {language === lang && <span>✓</span>}
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </div>
-      </div>
+      {/* Language Selector Removed */}
 
       {/* Left Panel */}
       <motion.div
@@ -785,11 +854,24 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                         type="email"
                         placeholder={t.enterEmail}
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-12"
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          const validation = validateEmail(e.target.value);
+                          setErrors(prev => ({ ...prev, email: validation.error || '' }));
+                        }}
+                        className={cn(
+                          "pl-10 h-12",
+                          errors.email && "border-red-500 focus-visible:ring-red-500"
+                        )}
                         required
                       />
                     </div>
+                    {errors.email && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                        <AlertCircle size={12} />
+                        <span>{errors.email}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -805,8 +887,15 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                         type={showPassword ? 'text' : 'password'}
                         placeholder={t.enterPassword}
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10 h-12"
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          const validation = validatePassword(e.target.value);
+                          setErrors(prev => ({ ...prev, password: validation.error || '' }));
+                        }}
+                        className={cn(
+                          "pl-10 pr-10 h-12",
+                          errors.password && "border-red-500 focus-visible:ring-red-500"
+                        )}
                         required
                       />
                       <button
@@ -817,6 +906,12 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
+                    {errors.password && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                        <AlertCircle size={12} />
+                        <span>{errors.password}</span>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -841,9 +936,18 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                       placeholder={t.enterName}
                       value={signupData.fullName}
                       onChange={(e) => updateSignupData('fullName', e.target.value)}
-                      className="h-12"
+                      className={cn(
+                        "h-12",
+                        errors.fullName && "border-red-500 focus-visible:ring-red-500"
+                      )}
                       required
                     />
+                    {errors.fullName && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.fullName}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -855,10 +959,19 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                         placeholder={t.enterPhone}
                         value={signupData.phone}
                         onChange={(e) => updateSignupData('phone', e.target.value)}
-                        className="pl-10 h-12"
+                        className={cn(
+                          "pl-10 h-12",
+                          errors.phone && "border-red-500 focus-visible:ring-red-500"
+                        )}
                         required
                       />
                     </div>
+                    {errors.phone && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.phone}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -869,11 +982,24 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                         type="email"
                         placeholder={t.enterEmail}
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-12"
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          const validation = validateEmail(e.target.value);
+                          setErrors(prev => ({ ...prev, email: validation.error || '' }));
+                        }}
+                        className={cn(
+                          "pl-10 h-12",
+                          errors.email && "border-red-500 focus-visible:ring-red-500"
+                        )}
                         required
                       />
                     </div>
+                    {errors.email && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.email}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -884,8 +1010,15 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                         type={showPassword ? 'text' : 'password'}
                         placeholder={t.enterPassword}
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10 h-12"
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          const validation = validatePassword(e.target.value);
+                          setErrors(prev => ({ ...prev, password: validation.error || '' }));
+                        }}
+                        className={cn(
+                          "pl-10 pr-10 h-12",
+                          errors.password && "border-red-500 focus-visible:ring-red-500"
+                        )}
                         required
                       />
                       <button
@@ -896,6 +1029,33 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
+                    {password && (
+                      <div className="mt-2">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-muted-foreground">Password strength:</span>
+                          <span className={getPasswordStrength(password).color}>
+                            {getPasswordStrength(password).strength}
+                          </span>
+                        </div>
+                        <div className="mt-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full transition-all",
+                              getPasswordStrength(password).strength === 'weak' && "bg-red-500 w-1/4",
+                              getPasswordStrength(password).strength === 'medium' && "bg-orange-500 w-1/2",
+                              getPasswordStrength(password).strength === 'strong' && "bg-yellow-500 w-3/4",
+                              getPasswordStrength(password).strength === 'very-strong' && "bg-green-500 w-full"
+                            )}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {errors.password && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.password}</span>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -922,9 +1082,18 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                         type="date"
                         value={signupData.dateOfBirth}
                         onChange={(e) => updateSignupData('dateOfBirth', e.target.value)}
-                        className="pl-10 h-12"
+                        className={cn(
+                          "pl-10 h-12",
+                          errors.dateOfBirth && "border-red-500 focus-visible:ring-red-500"
+                        )}
                       />
                     </div>
+                    {errors.dateOfBirth && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.dateOfBirth}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -1075,8 +1244,17 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                       placeholder={t.enterLicense}
                       value={signupData.licenseNumber}
                       onChange={(e) => updateSignupData('licenseNumber', e.target.value)}
-                      className="h-12"
+                      className={cn(
+                        "h-12",
+                        errors.licenseNumber && "border-red-500 focus-visible:ring-red-500"
+                      )}
                     />
+                    {errors.licenseNumber && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.licenseNumber}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -1085,8 +1263,17 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                       placeholder={t.enterSpecialty}
                       value={signupData.specialty}
                       onChange={(e) => updateSignupData('specialty', e.target.value)}
-                      className="h-12"
+                      className={cn(
+                        "h-12",
+                        errors.specialty && "border-red-500 focus-visible:ring-red-500"
+                      )}
                     />
+                    {errors.specialty && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.specialty}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -1096,9 +1283,18 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                       placeholder="e.g., 10"
                       value={signupData.experience}
                       onChange={(e) => updateSignupData('experience', e.target.value)}
-                      className="h-12"
+                      className={cn(
+                        "h-12",
+                        errors.experience && "border-red-500 focus-visible:ring-red-500"
+                      )}
                       min="0"
                     />
+                    {errors.experience && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.experience}</span>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -1123,8 +1319,17 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                       placeholder={t.enterStoreName || 'Enter your store name'}
                       value={signupData.storeName || ''}
                       onChange={(e) => updateSignupData('storeName', e.target.value)}
-                      className="h-12"
+                      className={cn(
+                        "h-12",
+                        errors.storeName && "border-red-500 focus-visible:ring-red-500"
+                      )}
                     />
+                    {errors.storeName && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.storeName}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -1133,8 +1338,17 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                       placeholder={t.enterAddress || 'Enter complete address'}
                       value={signupData.address || ''}
                       onChange={(e) => updateSignupData('address', e.target.value)}
-                      className="h-12"
+                      className={cn(
+                        "h-12",
+                        errors.address && "border-red-500 focus-visible:ring-red-500"
+                      )}
                     />
+                    {errors.address && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.address}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -1188,9 +1402,18 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
                         placeholder="+91 98765 43210"
                         value={signupData.emergencyPhone}
                         onChange={(e) => updateSignupData('emergencyPhone', e.target.value)}
-                        className="pl-10 h-12"
+                        className={cn(
+                          "pl-10 h-12",
+                          errors.emergencyPhone && "border-red-500 focus-visible:ring-red-500"
+                        )}
                       />
                     </div>
+                    {errors.emergencyPhone && (
+                      <div className="flex items-center gap-1 text-red-500 text-xs">
+                        <AlertCircle size={12} />
+                        <span>{errors.emergencyPhone}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl border border-primary/10">

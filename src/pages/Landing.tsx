@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, 
   Video, 
@@ -12,14 +13,46 @@ import {
   Phone,
   Mail,
   MapPin,
-  ChevronRight
+  ChevronRight,
+  User,
+  LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '@/lib/i18n/LanguageSwitcher';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Landing() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('onboardingComplete');
+    setUser(null);
+    window.location.reload();
+  };
 
   const features = [
     {
@@ -130,12 +163,48 @@ export function Landing() {
             {/* Language Switcher & CTA Buttons */}
             <div className="flex items-center gap-3">
               <LanguageSwitcher variant="compact" />
-              <Link to="/login">
-                <Button variant="ghost" size="sm">{t('signIn')}</Button>
-              </Link>
-              <Link to="/login">
-                <Button size="sm" className="btn-hero">{t('getStarted')}</Button>
-              </Link>
+              
+              {user ? (
+                /* Logged in - Show user menu */
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User size={16} className="text-primary" />
+                      </div>
+                      <span className="hidden md:inline font-medium">{user.name || 'User'}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div>
+                        <p className="font-medium">{user.name || 'User'}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                      <User size={16} className="mr-2" />
+                      Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+                      <LogOut size={16} className="mr-2" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                /* Not logged in - Show Sign In/Get Started */
+                <>
+                  <Link to="/login">
+                    <Button variant="ghost" size="sm">{t('signIn')}</Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button size="sm" className="btn-hero">{t('getStarted')}</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

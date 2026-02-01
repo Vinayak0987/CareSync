@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DoctorSidebar } from '@/components/doctor/DoctorSidebar';
-import { FloatingLanguageSwitcher } from '@/components/layout/FloatingLanguageSwitcher';
+
 import { DoctorDashboard } from '@/components/doctor/DoctorDashboard';
 import { DoctorAppointments } from '@/components/doctor/DoctorAppointments';
 import { DoctorConsultation } from '@/components/doctor/DoctorConsultation';
@@ -97,14 +97,13 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
     <div className="flex min-h-screen bg-background">
       <DoctorSidebar activeTab={activeTab} onTabChange={setActiveTab} onLogout={onLogout} />
 
-      <main className="flex-1 lg:ml-0 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
+      <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
         <div className="max-w-6xl mx-auto">
           {renderContent()}
         </div>
       </main>
 
-      {/* Floating Language Switcher - Bottom Right */}
-      <FloatingLanguageSwitcher />
+
     </div>
   );
 };
