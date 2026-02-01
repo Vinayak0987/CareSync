@@ -266,7 +266,9 @@ export function DoctorCommunity() {
                                     <div>
                                         <h3 className="font-semibold text-sm">{post.author.name}</h3>
                                         <p className="text-xs text-muted-foreground">
-                                            {post.author.specialty ? `${post.author.specialty} • ` : ''}{new Date(post.createdAt).toLocaleDateString()}
+                                            {(post.author._id === currentUser._id || post.author._id === currentUser.id)
+                                                ? (currentUser.specialty || 'General Physician')
+                                                : post.author.specialty} • {new Date(post.createdAt).toLocaleDateString()}
                                         </p>
                                     </div>
                                 </div>

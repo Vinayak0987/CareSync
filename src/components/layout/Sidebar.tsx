@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Home,
@@ -28,6 +28,18 @@ interface SidebarProps {
 export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { t } = useLanguage();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        setUser(JSON.parse(userStr));
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
+  }, []);
 
   const navItems = [
     { id: 'home', label: t('dashboard'), icon: Home },
@@ -39,6 +51,10 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
     { id: 'wellness', label: t('wellness'), icon: Heart },
     { id: 'community', label: 'Community', icon: MessageSquare },
   ];
+
+  const displayName = user?.name || currentPatient.name;
+  const displayRole = user?.role === 'patient' ? t('patient') : user?.role || t('patient');
+  const displayAvatar = user?.avatar || currentPatient.avatar;
 
   return (
     <>
@@ -105,14 +121,14 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
           {/* User Profile */}
           <div className="p-4 border-t border-sidebar-border">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent">
-              <img 
-                src={currentPatient.avatar} 
-                alt={currentPatient.name}
+              <img
+                src={displayAvatar}
+                alt={displayName}
                 className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/20"
               />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{currentPatient.name}</p>
-                <p className="text-xs text-muted-foreground">{t('patient')}</p>
+                <p className="font-medium text-sm truncate">{displayName}</p>
+                <p className="text-xs text-muted-foreground capitalize">{displayRole}</p>
               </div>
               <button
                 onClick={onLogout}

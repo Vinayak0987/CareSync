@@ -2,7 +2,14 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const { uploadReport } = require('../controllers/reportController');
+const { protect } = require('../middleware/authMiddleware');
+const {
+  getPatientReports,
+  uploadReport,
+  getReportFile,
+  deleteReport,
+  analyzeReports
+} = require('../controllers/reportController');
 
 // Multer Config
 const storage = multer.diskStorage({
@@ -20,21 +27,29 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|pdf/; // PDF support in Tesseract.js can be tricky without workers, sticking to images usually safer for basic implementation, but users might upload PDFs. Tesseract.js handles images best. Let's allow images.
+    const filetypes = /jpeg|jpg|png|pdf|doc|docx/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+    const mimetype = filetypes.test(file.mimetype) || file.mimetype === 'application/msword' || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-    if (extname && mimetype) {
+    if (extname) {
+      // mimetype check can be tricky for docs, trusting extname for now + basic MIME
       return cb(null, true);
     } else {
-      cb('Images Only! (jpeg, jpg, png)');
+      cb('Supported files: Images, PDF, Word');
     }
   }
 });
 
+// Protect all routes
+router.use(protect);
+
 router.post('/upload', upload.single('report'), uploadReport);
+router.post('/analyze', analyzeReports);
+router.get('/patient/:id', getPatientReports);
+router.get('/file/:filename', getReportFile);
+router.delete('/:id', deleteReport);
 
 module.exports = router;

@@ -44,7 +44,7 @@ interface DoctorDashboardProps {
 export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashboardProps) {
   const { t, td, tf, language } = useLanguage();
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
-  const [stats, setStats] = useState({ today: { total: 0, completed: 0 }, week: { total: 0, completed: 0 } });
+  const [stats, setStats] = useState({ today: { total: 0, completed: 0 }, week: { total: 0, completed: 0, rating: 0 } });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Get doctor info from localStorage
@@ -57,7 +57,7 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
     if (hour < 17) return t('goodAfternoon');
     return t('goodEvening');
   };
-  
+
   const greeting = getGreeting();
 
   // Get locale for date formatting based on language
@@ -352,7 +352,7 @@ export function DoctorDashboard({ onNavigate, onStartConsultation }: DoctorDashb
               <p className="text-xs text-muted-foreground">{t('completed' as any)}</p>
             </div>
             <div>
-              <p className="text-2xl font-display font-bold text-sky-600">0</p>
+              <p className="text-2xl font-display font-bold text-sky-600">{stats.week.rating}</p>
               <p className="text-xs text-muted-foreground">{t('avgRating' as any)}</p>
             </div>
           </div>

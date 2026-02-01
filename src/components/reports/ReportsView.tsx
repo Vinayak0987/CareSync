@@ -1,422 +1,463 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Activity, 
-  Heart, 
-  Droplets,
-  Calendar,
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  FileText,
   Download,
-  BarChart3,
-  
+  Trash2,
+  Search,
+  Filter,
+  Plus,
+  File,
+  Image as ImageIcon,
+  Activity,
+  X,
+  Upload,
+  Calendar,
+  User,
+  Eye
 } from 'lucide-react';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
-type ChartType = 'blood_pressure' | 'blood_sugar' | 'glucose' | 'heart_rate';
+interface Report {
+  _id: string;
+  title: string;
+  type: string;
+  description?: string;
+  fileUrl: string;
+  fileName: string;
+  date: string; // ISO string
+  doctorId?: {
+    name: string;
+    specialty: string;
+  };
+  createdAt: string;
+}
 
-const chartTabs: { id: ChartType; label: string; icon: React.ElementType; color: string }[] = [
-  { id: 'blood_pressure', label: 'Blood Pressure', icon: Activity, color: '#f43f5e' },
- { id: 'blood_sugar', label: 'Blood Sugar', icon: Droplets, color: '#f59e0b' },
-  { id: 'glucose', label: 'Glucose', icon: Droplets, color: '#a855f7' },
-  { id: 'heart_rate', label: 'Heart Rate', icon: Heart, color: '#10b981' },
-];
+const REPORT_TYPES = ['All', 'Blood', 'ECG', 'CT-Scan', 'X-Ray', 'MRI', 'Prescription', 'Lab', 'Other'];
 
 export function ReportsView() {
-  const [activeChart, setActiveChart] = useState<ChartType>('blood_pressure');
-  const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
-  const [vitals, setVitals] = useState<any[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState('All');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  // Upload State
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadType, setUploadType] = useState('General');
+  const [uploadDesc, setUploadDesc] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetchVitals();
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const userData = JSON.parse(userStr);
+        setUser(userData);
+        fetchReports(userData._id);
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
   }, []);
 
-  const fetchVitals = async () => {
+  const fetchReports = async (patientId: string) => {
     try {
-      const response = await api.get('/vitals');
-      setVitals(response.data);
+      setIsLoading(true);
+      const res = await api.get(`/reports/patient/${patientId}`);
+      setReports(res.data);
     } catch (error) {
-      console.error('Failed to fetch vitals', error);
-      toast.error('Failed to load health data');
+      console.error('Failed to fetch reports', error);
+      toast.error('Failed to load reports');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Filter vitals by time range
-  const getFilteredVitals = () => {
-    const now = new Date();
-    const daysToShow = timeRange === 'week' ? 7 : 30;
-    const cutoffDate = new Date(now.getTime() - daysToShow * 24 * 60 * 60 * 1000);
+  const handleUpload = async () => {
+    if (!uploadFile || !user) return;
 
-    return vitals
-      .filter((v: any) => new Date(v.createdAt) >= cutoffDate)
-      .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  };
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('report', uploadFile);
+      formData.append('patientId', user._id);
+      formData.append('title', uploadTitle || uploadFile.name);
+      formData.append('type', uploadType);
+      formData.append('description', uploadDesc);
 
-  const getChartData = () => {
-    const filtered = getFilteredVitals();
-    
-    if (activeChart === 'blood_pressure') {
-      return filtered
-        .filter((v: any) => v.type === 'blood_pressure')
-        .map((v: any) => {
-          const [systolic, diastolic] = v.value.split('/').map(Number);
-          return {
-            date: new Date(v.createdAt).toLocaleDateString('en', { month: 'short', day: 'numeric' }),
-            systolic,
-            diastolic,
-          };
-        });
-    } else {
-      return filtered
-        .filter((v: any) => v.type === activeChart)
-        .map((v: any) => ({
-          date: new Date(v.createdAt).toLocaleDateString('en', { month: 'short', day: 'numeric' }),
-          value: parseFloat(v.value),
-        }));
+      // If user is a doctor, they are the uploader. If patient, doctorId stays null or we handle it in backend.
+      if (user.role === 'doctor') {
+        formData.append('doctorId', user._id);
+      }
+
+      const res = await api.post('/reports/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setReports(prev => [res.data, ...prev]);
+      toast.success('Report uploaded successfully');
+
+      // Reset form
+      setUploadFile(null);
+      setUploadTitle('');
+      setUploadType('General');
+      setUploadDesc('');
+      setShowUploadModal(false);
+
+    } catch (error) {
+      console.error('Upload failed', error);
+      toast.error('Failed to upload report');
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const getLatestComparison = () => {
-    const filtered = getFilteredVitals();
-    
-    const getBP = (vitals: any[]) => {
-      const bp = vitals.find(v => v.type === 'blood_pressure');
-      return bp ? parseInt(bp.value.split('/')[0]) : 0;
-    };
-
-    const getValue = (vitals: any[], type: string) => {
-      const vital = vitals.find(v => v.type === type);
-      return vital ? parseFloat(vital.value) : 0;
-    };
-
-    const latest = filtered.slice(-1)[0];
-    const previous = filtered.slice(-2)[0];
-
-    if (!latest || !previous) return { bp: 0, sugar: 0, hr: 0 };
-
-    return {
-      bp: getBP([latest]) - getBP([previous]),
-      sugar: getValue([latest], 'blood_sugar') - getValue([previous], 'blood_sugar'),
-      hr: getValue([latest], 'heart_rate') - getValue([previous], 'heart_rate'),
-    };
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this report?')) return;
+    try {
+      await api.delete(`/reports/${id}`);
+      setReports(prev => prev.filter(r => r._id !== id));
+      toast.success('Report deleted');
+    } catch (error) {
+      console.error('Delete failed', error);
+      toast.error('Failed to delete report');
+    }
   };
 
-  const comparison = getLatestComparison();
-  const chartData = getChartData();
-  const activeTab = chartTabs.find(t => t.id === activeChart) || chartTabs[0];
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadFile(file);
+      if (!uploadTitle) setUploadTitle(file.name.split('.')[0]);
+    }
+  };
 
-  // Count appointments this month
-  const [appointmentsCount, setAppointmentsCount] = useState(0);
-  useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const response = await api.get('/appointments');
-        const now = new Date();
-        const thisMonth = response.data.filter((apt: any) => {
-          const aptDate = new Date(apt.date);
-          return aptDate.getMonth() === now.getMonth() && aptDate.getFullYear() === now.getFullYear();
-        });
-        setAppointmentsCount(thisMonth.length);
-      } catch (error) {
-        console.error('Failed to fetch appointments', error);
-      }
-    };
-    fetchAppointments();
-  }, []);
+  const filteredReports = reports.filter(report => {
+    const matchesSearch = report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.type.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = selectedType === 'All' || report.type === selectedType;
+    return matchesSearch && matchesType;
+  });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const getIconForType = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'blood': return <Activity className="text-rose-500" />;
+      case 'ecg': return <Activity className="text-rose-500" />; // Heart icon maybe?
+      case 'ct-scan':
+      case 'x-ray':
+      case 'mri': return <ImageIcon className="text-blue-500" />;
+      case 'prescription': return <FileText className="text-amber-500" />;
+      default: return <File className="text-gray-500" />;
+    }
+  };
+
+  const openReport = async (filename: string) => {
+    try {
+      // Use axios to fetch with auth headers
+      const response = await api.get(`/reports/file/${filename}`, {
+        responseType: 'blob'
+      });
+
+      // Create object URL from blob
+      const contentType = response.headers['content-type'];
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+
+      // Open in new tab
+      window.open(url, '_blank');
+
+      // Cleanup after a delay
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+    } catch (error) {
+      console.error('Error opening report:', error);
+      toast.error('Failed to open report. You may not have permission.');
+    }
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
-        <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">Health Reports</h1>
-        <p className="text-muted-foreground">Track your health trends and insights</p>
-      </motion.div>
-
-      {/* Stats Grid */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-      >
-        {/* Date Range Selector */}
-        <div className="flex items-center bg-muted rounded-lg p-1">
-          <button
-            onClick={() => setTimeRange('week')}
-            className={cn(
-              "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
-              timeRange === 'week' ? "bg-card shadow-sm" : "text-muted-foreground"
-            )}
-          >
-            Week
-          </button>
-          <button
-            onClick={() => setTimeRange('month')}
-            className={cn(
-              "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
-              timeRange === 'month' ? "bg-card shadow-sm" : "text-muted-foreground"
-            )}
-          >
-            Month
-          </button>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">Medical Reports Repository</h1>
+          <p className="text-muted-foreground">Securely store and access all your medical documents</p>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => toast.info('Export feature coming soon!')}
-        >
-          <Download size={16} className="mr-2" />
-          Export
+        <Button onClick={() => setShowUploadModal(true)} className="btn-hero shadow-lg shadow-primary/20">
+          <Plus size={18} className="mr-2" />
+          Upload Report
         </Button>
       </motion.div>
 
-      {/* Quick Stats */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        {/* Total Vitals */}
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Activity size={16} className="text-primary" />
-            </div>
-            <span className="text-sm font-medium">Total Vitals</span>
-          </div>
-          <p className="text-2xl font-display font-bold text-primary">{vitals.length}</p>
-          <p className="text-xs text-muted-foreground">Recorded</p>
-        </div>
-
-        {/* BP Change */}
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center">
-              <Activity size={16} className="text-rose-600" />
-            </div>
-            <span className="text-sm font-medium">BP Change</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <p className="text-2xl font-display font-bold">
-              {comparison.bp > 0 ? '+' : ''}{comparison.bp}
-            </p>
-            {comparison.bp > 0 ? (
-              <TrendingUp size={18} className="text-amber-500" />
-            ) : comparison.bp < 0 ? (
-              <TrendingDown size={18} className="text-emerald-500" />
-            ) : null}
-          </div>
-          <p className="text-xs text-muted-foreground">vs previous</p>
-        </div>
-
-        {/* Sugar Change */}
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-              <Droplets size={16} className="text-amber-600" />
-            </div>
-            <span className="text-sm font-medium">Sugar Change</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <p className="text-2xl font-display font-bold">
-              {comparison.sugar > 0 ? '+' : ''}{comparison.sugar}
-            </p>
-            {comparison.sugar > 0 ? (
-              <TrendingUp size={18} className="text-amber-500" />
-            ) : comparison.sugar < 0 ? (
-              <TrendingDown size={18} className="text-emerald-500" />
-            ) : null}
-          </div>
-          <p className="text-xs text-muted-foreground">mg/dL</p>
-        </div>
-
-        {/* Checkups */}
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center">
-              <Calendar size={16} className="text-sky-600" />
-            </div>
-            <span className="text-sm font-medium">Checkups</span>
-          </div>
-          <p className="text-2xl font-display font-bold">{appointmentsCount}</p>
-          <p className="text-xs text-muted-foreground">This month</p>
-        </div>
-      </motion.div>
-
-      {/* Chart Tabs */}
+      {/* Filters & Search */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-card rounded-xl border border-border overflow-hidden"
+        className="space-y-4"
       >
-        {/* Tab Header */}
-        <div className="flex overflow-x-auto border-b border-border">
-          {chartTabs
-            .filter(tab => {
-              // Only show charts that have data
-              const hasData = vitals.some((v: any) => v.type === tab.id);
-              return hasData;
-            })
-            .map((tab) => (
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search reports by name or type..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+            {REPORT_TYPES.map(type => (
               <button
-                key={tab.id}
-                onClick={() => setActiveChart(tab.id)}
+                key={type}
+                onClick={() => setSelectedType(type)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px",
-                  activeChart === tab.id 
-                    ? "border-primary text-primary bg-primary/5" 
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                  "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border",
+                  selectedType === type
+                    ? "bg-primary text-white border-primary"
+                    : "bg-card text-muted-foreground border-border hover:bg-muted"
                 )}
               >
-                <tab.icon size={16} />
-                {tab.label}
+                {type}
               </button>
             ))}
-        </div>
-
-        {/* Chart Content */}
-        <div className="p-6">
-          <h3 className="font-display font-semibold text-lg mb-4">
-            {activeTab.label} - Last {timeRange === 'week' ? '7' : '30'} Days
-          </h3>
-          {chartData.length === 0 ? (
-            <div className="h-64 flex items-center justify-center">
-              <p className="text-muted-foreground">No data available for this period</p>
-            </div>
-          ) : (
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                {activeChart === 'blood_pressure' ? (
-                  <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                    <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" domain={[60, 180]} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                      }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="systolic" 
-                      stroke="#f43f5e" 
-                      strokeWidth={2}
-                      dot={{ fill: '#f43f5e', strokeWidth: 2, r: 4 }}
-                      name="Systolic"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="diastolic" 
-                      stroke="#8b5cf6" 
-                      strokeWidth={2}
-                      dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
-                      name="Diastolic"
-                    />
-                  </LineChart>
-                ) : (
-                  <AreaChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                    <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                      }}
-                    />
-                    <defs>
-                      <linearGradient id={`gradient-${activeTab.id}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={activeTab.color} stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor={activeTab.color} stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <Area 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke={activeTab.color}
-                      strokeWidth={2}
-                      fill={`url(#gradient-${activeTab.id})`}
-                      name={activeTab.label}
-                    />
-                  </AreaChart>
-                )}
-              </ResponsiveContainer>
-            </div>
-          )}
+          </div>
         </div>
       </motion.div>
 
-      {/* Health Summary */}
-
+      {/* Reports Grid */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-card rounded-xl p-6 border border-border shadow-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
       >
-        <h3 className="font-display font-semibold text-lg mb-3">📊 Health Summary</h3>
-        {vitals.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Start logging your vitals to see personalized health insights here!
-          </p>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          </div>
+        ) : filteredReports.length === 0 ? (
+          <div className="text-center py-16 bg-muted/30 rounded-2xl border border-dashed border-border mt-4">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 text-muted-foreground/50" />
+            </div>
+            <h3 className="text-lg font-medium mb-1">No reports found</h3>
+            <p className="text-muted-foreground max-w-sm mx-auto mb-6">
+              {searchQuery || selectedType !== 'All'
+                ? "Try adjusting your search or filters"
+                : "Upload your first medical report to get started"}
+            </p>
+            {(searchQuery || selectedType !== 'All') && (
+              <Button variant="outline" onClick={() => { setSearchQuery(''); setSelectedType('All'); }}>
+                Clear Filters
+              </Button>
+            )}
+          </div>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-4 text-sm">
-            <div className="space-y-2">
-              <p className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                {vitals.length} health metrics recorded
-              </p>
-              <p className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                Regular monitoring active
-              </p>
-            </div>
-            <div className="space-y-2">
-              <p className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-sky-500" />
-                {appointmentsCount} consultation{appointmentsCount !== 1 ? 's' : ''} this month
-              </p>
-              <p className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                Keep tracking for better insights
-              </p>
-            </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
+            <AnimatePresence>
+              {filteredReports.map((report, index) => (
+                <motion.div
+                  key={report._id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="group bg-card hover:bg-muted/30 border border-border rounded-xl p-4 transition-all hover:shadow-md relative overflow-hidden"
+                >
+                  <div className="absolute top-0 left-0 w-1 h-full bg-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="p-2.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      {getIconForType(report.type)}
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => openReport(report.fileUrl)}
+                        className="p-1.5 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-primary/10"
+                        title="View"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(report._id)}
+                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-destructive/10"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <h3 className="font-medium truncate pr-2 mb-1" title={report.title}>{report.title}</h3>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                      {report.type}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {(parseInt(report.fileUrl) ? "0 KB" : "File")} {/* Placeholder size */}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 pt-3 border-t border-border">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar size={12} />
+                      <span>{new Date(report.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {report.doctorId && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <User size={12} />
+                        <span>Dr. {report.doctorId.name}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {report.description && (
+                    <div className="mt-2 text-xs text-muted-foreground line-clamp-2 bg-muted/50 p-2 rounded">
+                      {report.description}
+                    </div>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => openReport(report.fileUrl)}
+                  >
+                    View Report
+                  </Button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </motion.div>
+
+      {/* Upload Modal */}
+      <AnimatePresence>
+        {showUploadModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-50"
+              onClick={() => setShowUploadModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none p-4"
+            >
+              <div className="w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl pointer-events-auto flex flex-col max-h-[90vh]">
+                <div className="p-6 border-b border-border flex items-center justify-between">
+                  <h2 className="text-xl font-bold font-display">Upload New Report</h2>
+                  <button onClick={() => setShowUploadModal(false)} className="p-2 hover:bg-muted rounded-full">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-4 overflow-y-auto">
+
+                  {/* File Input */}
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className={cn(
+                      "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors",
+                      uploadFile ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
+                    )}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    />
+                    {uploadFile ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <FileText className="text-primary w-6 h-6" />
+                        </div>
+                        <p className="font-medium text-foreground">{uploadFile.name}</p>
+                        <p className="text-xs text-muted-foreground">{(uploadFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setUploadFile(null); }}>
+                          Change File
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-2">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                        <p className="font-medium text-foreground">Click to upload report</p>
+                        <p className="text-xs">PDF, JPG, PNG up to 10MB</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Details Form */}
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium">Report Title</label>
+                      <Input
+                        value={uploadTitle}
+                        onChange={(e) => setUploadTitle(e.target.value)}
+                        placeholder="e.g. Annual Blood Test"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium">Type</label>
+                        <select
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                          value={uploadType}
+                          onChange={(e) => setUploadType(e.target.value)}
+                        >
+                          {REPORT_TYPES.filter(t => t !== 'All').map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {/* More fields can go here */}
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium">Description / Notes</label>
+                      <textarea
+                        className="w-full min-h-[80px] p-3 rounded-md border border-input bg-background text-sm resize-none"
+                        placeholder="Add any additional notes..."
+                        value={uploadDesc}
+                        onChange={(e) => setUploadDesc(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-border flex justify-end gap-3 bg-muted/20">
+                  <Button variant="ghost" onClick={() => setShowUploadModal(false)}>Cancel</Button>
+                  <Button onClick={handleUpload} disabled={!uploadFile || isUploading}>
+                    {isUploading ? "Uploading..." : "Save Report"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+

@@ -29,11 +29,28 @@ export function MedicalStoreView() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [prescriptionUploaded, setPrescriptionUploaded] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { addOrder, getPatientOrders } = useOrders();
   const { storeProducts, loading, fetchStoreProducts } = useProducts();
-  const patientOrders = getPatientOrders(currentPatient.name);
+
+  // Load user data
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        setUser(JSON.parse(userStr));
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
+  }, []);
+
+  const patientName = user?.name || currentPatient.name;
+  const patientAvatar = user?.avatar || currentPatient.avatar;
+
+  const patientOrders = getPatientOrders(patientName);
 
   // Fetch store products on mount
   useEffect(() => {
@@ -120,12 +137,12 @@ export function MedicalStoreView() {
     const hasPrescriptionItems = cart.some(item => item.product.prescription);
 
     console.log('Checkout called with cart:', cart);
-    console.log('Creating order for:', currentPatient.name);
+    console.log('Creating order for:', patientName);
 
     try {
       await addOrder({
-        patientName: currentPatient.name,
-        patientAvatar: currentPatient.avatar,
+        patientName: patientName,
+        patientAvatar: patientAvatar,
         items: cart.map(item => ({
           name: item.product.name,
           quantity: item.quantity,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { DoctorSidebar } from '@/components/doctor/DoctorSidebar';
 import { FloatingLanguageSwitcher } from '@/components/layout/FloatingLanguageSwitcher';
@@ -8,6 +8,7 @@ import { DoctorConsultation } from '@/components/doctor/DoctorConsultation';
 import { PatientHistory } from '@/components/doctor/PatientHistory';
 import { DoctorSettings } from '@/components/doctor/DoctorSettings';
 import { DoctorCommunity } from '@/components/doctor/DoctorCommunity';
+import { DoctorCallHistory } from '@/components/doctor/DoctorCallHistory';
 
 // Type definition for appointment data - matches API response
 interface DoctorAppointment {
@@ -34,9 +35,18 @@ interface DoctorIndexProps {
 }
 
 const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Initialize from localStorage to persist state across refreshes
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('doctorActiveTab') || 'dashboard';
+  });
+
   const [currentAppointment, setCurrentAppointment] = useState<DoctorAppointment | null>(null);
   const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>(undefined);
+
+  // Persist activeTab whenever it changes
+  useEffect(() => {
+    localStorage.setItem('doctorActiveTab', activeTab);
+  }, [activeTab]);
 
   const handleStartConsultation = (appointment: DoctorAppointment) => {
     setCurrentAppointment(appointment);
@@ -83,6 +93,12 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
     setActiveTab('patients');
   };
 
+  // Custom Logout handler to clean up simple persisted state
+  const handleLogout = () => {
+    localStorage.removeItem('doctorActiveTab');
+    onLogout();
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -103,11 +119,7 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
             />
           );
         }
-        return (
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
-            <p>No active consultation. Start a call from the dashboard.</p>
-          </div>
-        );
+        return <DoctorCallHistory />;
       case 'patients':
         return <PatientHistory initialPatientId={selectedPatientId} />;
       case 'community':
@@ -126,7 +138,7 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <DoctorSidebar activeTab={activeTab} onTabChange={setActiveTab} onLogout={onLogout} />
+      <DoctorSidebar activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout} />
 
       <main className="flex-1 lg:ml-0 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
         <div className="max-w-6xl mx-auto">
@@ -141,4 +153,3 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
 };
 
 export default DoctorIndex;
-
