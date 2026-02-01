@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  Heart,
-  Video,
-  Pill,
-  Activity,
-  ShoppingBag,
-  Shield,
-  Clock,
-  Users,
+import { 
+  Heart, 
+  Video, 
+  Pill, 
+  Activity, 
+  ShoppingBag, 
   ArrowRight,
   Check,
   Star,
@@ -197,10 +194,7 @@ export function Landing() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-                <Heart className="w-5 h-5 text-white" fill="currentColor" />
-              </div>
-              <span className="text-xl font-display font-bold gradient-text">CareSync</span>
+              <img src="/CareSyncLogo.png" alt="CareSync Logo" className="h-36 w-auto object-contain" />
             </div>
 
             {/* Nav Links */}
@@ -292,10 +286,7 @@ export function Landing() {
                     <ArrowRight size={18} className="ml-2" />
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  <Video size={18} className="mr-2" />
-                  {t('watchDemo')}
-                </Button>
+
 
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>

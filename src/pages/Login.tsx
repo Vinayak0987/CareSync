@@ -684,10 +684,7 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
         </div>
 
         <Link to="/" className="flex items-center gap-3 relative z-10">
-          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <Heart className="w-7 h-7 text-white" fill="currentColor" />
-          </div>
-          <span className="text-2xl font-display font-bold text-white">CareSync</span>
+          <img src="/CareSyncLogo.png" alt="CareSync Logo" className="h-40 w-auto object-contain bg-white/20 backdrop-blur-sm rounded-xl p-1" />
         </Link>
 
         <div className="relative z-10 space-y-6">
@@ -720,10 +717,7 @@ export function Login({ onLogin, defaultRole }: LoginProps) {
         >
           {/* Mobile Logo */}
           <Link to="/" className="lg:hidden flex items-center justify-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <Heart className="w-7 h-7 text-white" fill="currentColor" />
-            </div>
-            <span className="text-2xl font-display font-bold gradient-text">CareSync</span>
+            <img src="/CareSyncLogo.png" alt="CareSync Logo" className="h-40 w-auto object-contain" />
           </Link>
 
           {/* Header */}
