@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Heart, 
-  Video, 
-  Pill, 
-  Activity, 
-  ShoppingBag, 
+import {
+  Heart,
+  Video,
+  Pill,
+  Activity,
+  ShoppingBag,
+  Shield,
+  Clock,
+  Users,
   ArrowRight,
   Check,
   Star,
@@ -15,9 +18,21 @@ import {
   MapPin,
   ChevronRight,
   User,
-  LogOut
+  LogOut,
+  PhoneCall,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import { LanguageSwitcher } from '@/lib/i18n/LanguageSwitcher';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import {
@@ -33,6 +48,9 @@ export function Landing() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -52,6 +70,39 @@ export function Landing() {
     localStorage.removeItem('onboardingComplete');
     setUser(null);
     window.location.reload();
+  };
+
+  const handleQuickAppointment = async () => {
+    if (!phoneNumber || phoneNumber.length < 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/voice/initiate-call', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('📞 Call initiated! You will receive a call shortly.');
+        setIsDialogOpen(false);
+        setPhoneNumber('');
+      } else {
+       toast.error(data.error || 'Failed to initiate call');
+      }
+    } catch (error) {
+      toast.error('Failed to connect to server');
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const features = [
@@ -224,12 +275,12 @@ export function Landing() {
                 <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                 {t('trustedBy')}
               </div>
-              
+
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-foreground leading-tight mb-6">
                 {t('heroTitle')}{' '}
                 <span className="gradient-text">{t('simplified')}</span>
               </h1>
-              
+
               <p className="text-lg text-muted-foreground mb-8 max-w-lg">
                 {t('heroDescription')}
               </p>
@@ -245,6 +296,59 @@ export function Landing() {
                   <Video size={18} className="mr-2" />
                   {t('watchDemo')}
                 </Button>
+
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white border-green-500">
+                      <PhoneCall size={18} className="mr-2" />
+                      Quick Appointment
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <PhoneCall className="w-5 h-5 text-primary" />
+                        Quick Appointment via Call
+                      </DialogTitle>
+                      <DialogDescription>
+                        Enter your phone number and we'll call you to book an appointment instantly!
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-4 mt-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">+91</span>
+                        <Input
+                          type="tel"
+                          placeholder="Enter your 10-digit phone number"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                          className="flex-1"
+                          maxLength={10}
+                        />
+                      </div>
+                      <Button
+                        onClick={handleQuickAppointment}
+                        disabled={isLoading || phoneNumber.length !== 10}
+                        className="w-full btn-hero"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Calling...
+                          </>
+                        ) : (
+                          <>
+                            <PhoneCall size={18} className="mr-2" />
+                            Call Me Now
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center">
+                        You'll receive a call from our AI assistant to help you book an appointment
+                      </p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
 
               {/* Stats */}
@@ -308,7 +412,7 @@ export function Landing() {
                 {/* Main Card */}
                 <div className="bg-card rounded-2xl p-6 shadow-xl border border-border">
                   <div className="flex items-center gap-4 mb-4">
-                    <img 
+                    <img
                       src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face"
                       alt="Doctor"
                       className="w-16 h-16 rounded-xl object-cover"
@@ -317,7 +421,7 @@ export function Landing() {
                       <p className="font-display font-semibold">Dr. Priya Sharma</p>
                       <p className="text-sm text-primary">Cardiology</p>
                       <div className="flex items-center gap-1 mt-1">
-                        {[1,2,3,4,5].map(i => (
+                        {[1, 2, 3, 4, 5].map(i => (
                           <Star key={i} size={12} className="text-warning fill-warning" />
                         ))}
                         <span className="text-xs text-muted-foreground ml-1">4.9</span>
@@ -455,8 +559,8 @@ export function Landing() {
                 </div>
                 <p className="text-muted-foreground mb-6">"{testimonial.quote}"</p>
                 <div className="flex items-center gap-3">
-                  <img 
-                    src={testimonial.image} 
+                  <img
+                    src={testimonial.image}
                     alt={testimonial.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
@@ -496,9 +600,8 @@ export function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className={`relative bg-card rounded-2xl p-6 border shadow-sm ${
-                  plan.popular ? 'border-primary shadow-lg scale-105' : 'border-border'
-                }`}
+                className={`relative bg-card rounded-2xl p-6 border shadow-sm ${plan.popular ? 'border-primary shadow-lg scale-105' : 'border-border'
+                  }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
@@ -520,7 +623,7 @@ export function Landing() {
                   ))}
                 </ul>
                 <Link to="/login">
-                  <Button 
+                  <Button
                     className={`w-full ${plan.popular ? 'btn-hero' : ''}`}
                     variant={plan.popular ? 'default' : 'outline'}
                   >
@@ -587,7 +690,7 @@ export function Landing() {
                 </a>
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">{t('product')}</h4>
               <ul className="space-y-2 text-sm text-background/60">
@@ -597,7 +700,7 @@ export function Landing() {
                 <li><a href="#" className="hover:text-background transition-colors">{t('forHospitals')}</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">{t('company')}</h4>
               <ul className="space-y-2 text-sm text-background/60">
@@ -607,7 +710,7 @@ export function Landing() {
                 <li><a href="#" className="hover:text-background transition-colors">{t('contact')}</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">{t('contact')}</h4>
               <ul className="space-y-2 text-sm text-background/60">
@@ -626,7 +729,7 @@ export function Landing() {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-background/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-background/60">
               © 2026 CareSync. {t('allRightsReserved')}

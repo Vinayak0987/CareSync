@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { DoctorSidebar } from '@/components/doctor/DoctorSidebar';
 
 import { DoctorDashboard } from '@/components/doctor/DoctorDashboard';
@@ -42,7 +43,37 @@ const DoctorIndex = ({ onLogout }: DoctorIndexProps) => {
     setActiveTab('consultation');
   };
 
-  const handleEndCall = () => {
+  const handleEndCall = async () => {
+    if (currentAppointment) {
+      try {
+        // Get auth token
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+
+        if (user?.token) {
+          // Update appointment status to completed
+          const response = await fetch(`http://localhost:5000/api/appointments/${currentAppointment.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${user.token}`
+            },
+            body: JSON.stringify({ status: 'completed' })
+          });
+
+          if (response.ok) {
+            toast.success('Consultation ended', {
+              description: 'Appointment has been marked as completed.'
+            });
+          } else {
+            toast.error('Failed to update appointment status');
+          }
+        }
+      } catch (error) {
+        console.error('Error updating appointment status:', error);
+      }
+    }
+
     setCurrentAppointment(null);
     setActiveTab('dashboard');
   };

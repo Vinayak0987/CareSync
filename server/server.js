@@ -20,14 +20,44 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
+
+// Socket.io with CORS for production
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Make io available globally for controllers
+global.io = io;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true
+}));
 app.use(express.json());
+
+// Logger for Twilio requests
+app.use((req, res, next) => {
+  if (req.url.includes('/api/voice')) {
+    console.log(`[Twilio Request] ${req.method} ${req.url}`);
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+  }
+  next();
+});
+app.use(express.urlencoded({ extended: true })); // For Twilio webhook form data
 
 // Basic Route
 app.get('/', (req, res) => {
   res.send('CareSync API is running...');
+});
+
+// Health check for Render
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 // Define Routes
@@ -38,7 +68,9 @@ app.use('/api/vitals', require('./routes/vitalRoutes'));
 app.use('/api/medicines', require('./routes/medicineRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/voice', require('./routes/voiceRoutes')); // Voice calling agent
 app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
+app.use('/api/products', require('./routes/productRoutes'));
 
 // Upload Report Endpoint
 app.post('/api/upload-report', upload.single('report'), async (req, res) => {
@@ -155,17 +187,6 @@ app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use(require('./middleware/errorMiddleware').errorHandler);
 const PORT = process.env.PORT || 5000;
 
-// Create HTTP server for Socket.IO
-const server = http.createServer(app);
-
-// Setup Socket.IO
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
-});
-
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('✅ User connected:', socket.id);
@@ -259,4 +280,8 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   console.log(`✉️  Socket.IO ready for real-time chat`);
+
+  // Initialize reminder scheduler
+  const { initReminderScheduler } = require('./services/reminderScheduler');
+  initReminderScheduler();
 });
