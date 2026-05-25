@@ -40,9 +40,6 @@ export function Sidebar({ activeTab, onTabChange, onLogout }: SidebarProps) {
     { id: 'community', label: 'Community', icon: MessageSquare },
   ];
 
-  const displayName = user?.name || currentPatient.name;
-  const displayRole = user?.role === 'patient' ? t('patient') : user?.role || t('patient');
-  const displayAvatar = user?.avatar || currentPatient.avatar;
 
   return (
     <>

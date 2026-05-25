@@ -1,306 +1,202 @@
-# CareSync — Intelligent Healthcare, Simplified
-
-> Transforming healthcare delivery through seamless telemedicine, AI-driven insights, and compassionate community support.
-
----
-
-## ✨ Why CareSync?
-
-CareSync bridges the gap between patients, doctors, and pharmacies with an intelligent platform that makes quality healthcare accessible, efficient, and human-centered. From HD video consultations to AI-powered health monitoring, we've reimagined every touchpoint of your healthcare journey.
-
----
-
-## 🚀 Core Capabilities
-
-### Telemedicine Reimagined
-- **HD Video Consultations**: Crystal-clear video calls powered by WebRTC and Socket.IO [1](#5-0) 
-- **In-Call Collaboration**: Real-time chat with message persistence and role-based context [2](#5-1) 
-- **Smart Controls**: Picture-in-picture, mute/video toggles, and call duration tracking [3](#5-2) 
-
-### Intelligent Health Monitoring
-- **Vital Tracking**: Monitor BP, blood sugar, heart rate, and SpO2 with AI-powered alerts [4](#5-3) 
-- **Chronic Disease Management**: Track Diabetes, Hypertension, Heart Disease, COPD, and Kidney Disease with risk scoring [5](#5-4) 
-- **Critical Alerts**: Instant notifications for high-risk patients with emergency booking options [6](#5-5) 
-
-### Voice-First Appointment Booking
-- **Multilingual IVR**: Interactive voice response in English and Hindi [7](#5-6) 
-- **Smart Booking**: Doctor selection, time slot suggestions, and automated reminders [8](#5-7) [9](#5-8) 
-- **One-Tap Access**: Quick voice booking directly from the landing page [10](#5-9) 
-
-### AI-Powered Insights
-- **Report Analysis**: Medical report processing using Google Gemini and Groq APIs [11](#5-10) 
-- **History Summarization**: Comprehensive patient history with trends and insights [12](#5-11) 
-- **Digital Prescriptions**: E-prescriptions with medication management during consultations [13](#5-12) 
-
-### Community & Wellness
-- **Patient Stories**: Share experiences in categories like Mental Health, Diabetes, and Wellness [14](#5-13) 
-- **Medical Community**: Doctors share research, case studies, and clinical insights [15](#5-14) 
-- **Mindfulness Suite**: Six wellness activities including breath pacer, memory games, and meditation timer [16](#5-15) 
-
----
-
-## 🏥 Role-Based Experiences
-
-| Patient | Doctor | Pharmacy |
-|---------|--------|----------|
-| 📅 Book appointments via web or voice | 🩺 Manage consultation schedule | 💊 Process and verify prescriptions |
-| 📊 Track vitals with smart alerts | 📹 Conduct HD video consultations | 📦 Manage inventory and deliveries |
-| 💬 Share stories in community | 📋 Issue digital prescriptions | 🔍 Verify prescription authenticity |
-| 🎮 Access mindfulness games | 📚 Post research and case studies | 📈 Track order status and analytics |
-| 📱 Access AI-analyzed reports | 👥 Review patient history | 🚚 Coordinate delivery logistics |
-
----
-
-## 🛠 Technology Stack
-
-### Frontend Architecture
-```typescript
-React 18.3.1 + TypeScript
-├── UI Framework: Radix UI + shadcn/ui
-├── Styling: Tailwind CSS 3.4.17
-├── State: React Context + TanStack Query
-├── Real-time: Socket.IO Client 4.8.3
-└── Build: Vite 5.4.19
-``` [17](#5-16) 
-
-### Backend Services
-```javascript
-Node.js + Express.js
-├── Database: MongoDB + Mongoose ODM
-├── Auth: JWT + bcrypt
-├── Real-time: Socket.IO Server
-├── AI: Google Gemini + Groq SDK
-└── Communication: Twilio + Nodemailer
-``` [18](#5-17) 
-
----
-
-## 🌍 Global Accessibility
-
-CareSync speaks your language with instant switching between:
-- 🇺🇸 English • 🇮🇳 Hindi • 🇮🇳 Marathi • 🇱🇰 Tamil • 🇮🇳 Telugu • 🇧🇩 Bengali [19](#5-18) 
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+
-- MongoDB instance
-- API keys for Cloudinary, Twilio, Gemini, Groq
-
-### Installation
-```bash
-# Clone & install
-git clone https://github.com/Vinayak0987/care-connect-hub.git
-cd care-connect-hub
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys
-
-# Launch development
-npm run dev:all
-# Frontend: http://localhost:5173
-# Backend:  http://localhost:5000
-``` [20](#5-19) 
-
----
-
-## 📊 Platform Impact
-
-- **10,000+** Active Patients
-- **500+** Verified Doctors  
-- **50,000+** Consultations Completed
-- **4.8/5** User Rating
-
----
-
-## 🧪 Development
-
-```bash
-# Testing
-npm run test              # Run test suite
-npm run test:watch        # Watch mode
-
-# Production
-npm run build            # Build for production
-npm run start            # Start production server
-```
-
----
-
-## 📜 License & Contributing
-
-This project is licensed under the MIT License. We welcome contributions! Please read our contributing guidelines and submit a pull request.
-
----
-
-## 📞 Get in Touch
-
-- 📧 **Email**: support@caresync.com
-- 🌐 **Website**: [caresync.com](https://caresync.com)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/Vinayak0987/care-connect-hub/issues)
-
----
-
 <div align="center">
 
-**Built with ❤️ for healthier communities**
+<img src="./public/CareSyncLogo.png" alt="CareSync Logo" width="180"/>
 
-*Empowering 10,000+ patients across India with accessible, intelligent healthcare*
+# CareSync — Intelligent Healthcare, Simplified
+
+**A premium, multi-role intelligent healthcare ecosystem bridging the gap between patients, doctors, and pharmacies through AI diagnostics, voice-activated booking, and HD teleconsultations.**
+
+---
+
+[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+[![Socket.IO](https://img.shields.io/badge/Socket.IO-Realtime-010101?style=for-the-badge&logo=socket.io&logoColor=white)](https://socket.io)
 
 </div>
 
-## Notes
-- Voice booking requires Twilio credentials and public webhook URL for full functionality [21](#5-20) 
-- Real-time features require both frontend and backend servers running simultaneously
-- AI analysis depends on Python subprocess execution for report processing
-- Environment variables required for all external service integrations
+---
 
-Wiki pages you might want to explore:
-- [Overview (Vinayak0987/care-connect-hub)](/wiki/Vinayak0987/care-connect-hub#1)
-- [Doctor Portal (Vinayak0987/care-connect-hub)](/wiki/Vinayak0987/care-connect-hub#4.2)
+## 🌟 Overview
 
-Wiki pages you might want to explore:
-- [Overview (Vinayak0987/care-connect-hub)](/wiki/Vinayak0987/care-connect-hub#1)
-- [Internationalization (Vinayak0987/care-connect-hub)](/wiki/Vinayak0987/care-connect-hub#8)
+CareSync is a state-of-the-art, full-stack digital health platform designed to unify the healthcare journey. By connecting Patients, Doctors, and Pharmacies into a single, cohesive experience, CareSync removes administrative friction and empowers users with real-time analytics, automated risk prediction, and seamless communication channels.
 
-### Citations
+### 📐 System Architecture
 
-**File:** src/pages/Landing.tsx (L291-342)
-```typescript
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white border-green-500">
-                      <PhoneCall size={18} className="mr-2" />
-                      Quick Appointment
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2">
-                        <PhoneCall className="w-5 h-5 text-primary" />
-                        Quick Appointment via Call
-                      </DialogTitle>
-                      <DialogDescription>
-                        Enter your phone number and we'll call you to book an appointment instantly!
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-4 mt-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">+91</span>
-                        <Input
-                          type="tel"
-                          placeholder="Enter your 10-digit phone number"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                          className="flex-1"
-                          maxLength={10}
-                        />
-                      </div>
-                      <Button
-                        onClick={handleQuickAppointment}
-                        disabled={isLoading || phoneNumber.length !== 10}
-                        className="w-full btn-hero"
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Calling...
-                          </>
-                        ) : (
-                          <>
-                            <PhoneCall size={18} className="mr-2" />
-                            Call Me Now
-                          </>
-                        )}
-                      </Button>
-                      <p className="text-xs text-muted-foreground text-center">
-                        You'll receive a call from our AI assistant to help you book an appointment
-                      </p>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-```
+![CareSync System Architecture](./assets/Architecture_diagram.png)
 
-**File:** src/lib/i18n/translations.ts (L1-76)
-```typescript
-export const translations = {
-  en: {
-    // Common
-    welcome: "Welcome",
-    loading: "Loading...",
-    error: "Error",
-    success: "Success",
-    save: "Save",
-    cancel: "Cancel",
-    delete: "Delete",
-    edit: "Edit",
-    close: "Close",
-    search: "Search",
-    
-    // Navigation
-    home: "Home",
-    appointments: "Appointments",
-    records: "Records",
-    reports: "Reports",
-    consultation: "Consultation",
-    medicalStore: "Medical Store",
-    wellness: "Wellness",
-    settings: "Settings",
-    logout: "Logout",
-    features: "Features",
-    howItWorks: "How it Works",
-    testimonials: "Testimonials",
-    pricing: "Pricing",
-    
-    // Dashboard
-    dashboard: "Dashboard",
-    goodMorning: "Good Morning",
-    goodAfternoon: "Good Afternoon",
-    goodEvening: "Good Evening",
-    welcomeBack: "Welcome back",
-    yourHealth: "Your Health",
-    ourPriority: "Our Priority",
-    simplified: "Simplified",
-    
-    // Medicine & Appointments
-    todaysMedicines: "Today's Medicines",
-    morningDose: "Morning Dose",
-    afternoonDose: "Afternoon Dose",
-    eveningDose: "Evening Dose",
-    reason: "Reason",
-    today: "Today",
-    tomorrow: "Tomorrow",
-    done: "done",
-    taken: "Taken",
-    pending: "Pending",
-    followUpCheckup: "Follow-up checkup",
-    cardiology: "Cardiology",
-    
-    
-    // Landing Page - Hero
-    trustedBy: "Trusted by 10,000+ patients",
-    heroTitle: "Your Health,",
-    heroDescription: "Connect with doctors, track your vitals, manage prescriptions, and order medicines — all from one seamless platform designed for your wellness.",
-    startJourney: "Start Your Journey",
-    watchDemo: "Watch Demo",
-    getStarted: "Get Started",
-    
-    // Stats
-    activePatients: "Active Patients",
-    verifiedDoctors: "Verified Doctors",
-    consultations: "Consultations",
-    userRating: "User Rating",
-    
-    // Features
-    everythingYouNeed: "Everything You Need for",
-    betterHealth: "Better Health",
-    featuresDescription: "From consultations to medicine delivery, we've got every aspect of your healthcare journey covered.",
-    telemedicine: "Telemedicine",
-    telemedicineDesc: "Connect with doctors through HD video consultations from the comfort of your home.",
-    healthTracking: "Health Tracking",
-    healthTrackingDesc: "Monitor your vitals, get smart alerts, and track your health trends over time.",
-```
+---
+
+## 🎭 Role-Based Access
+
+CareSync provides custom-tailored environments for three key healthcare roles:
+
+| 👤 Patient Suite | 🩺 Doctor Portal | 💊 Pharmacy Dashboard |
+| :--- | :--- | :--- |
+| • AI-assisted and voice-based bookings<br>• Real-time vital tracking & risk prediction<br>• Secure medical records vault<br>• Direct telehealth & online medicine shopping | • Calendar & consultation manager<br>• Longitudinal patient records & vital history<br>• Real-time digital prescriptions<br>• Availability & pricing configurations | • Sales & operations analytics panel<br>• Digital order dispatch & prescription verification<br>• Dynamic medicine inventory manager |
+
+---
+
+## 🏥 Patient Experience
+
+### 🔐 Secure Multi-Role Authentication
+![Authentication Page](./assets/Authenticarion_page.png)
+CareSync features an advanced JWT-secured authentication system tailored for Patients, Doctors, and Pharmacies. During onboarding, patients set up their custom health profile—including pre-existing chronic conditions—to calibrate their personalized AI dashboard.
+
+---
+
+### 📞 Interactive Landing Page & AI Voice Booking
+![Landing Page](./assets/DashBoard.png)
+An engaging, multilingual landing page supporting 6 regional languages (English, Hindi, Marathi, Tamil, Telugu, and Bengali) with real-time translation. It features our flagship AI Voice Agent powered by Twilio and Google Gemini, allowing patients to schedule medical appointments via a simple telephone call without even logging in.
+
+---
+
+### 📊 Health & Risk Analytics Dashboard
+![Patient Dashboard](./assets/User_dashboard.png)
+The patient’s central command hub, displaying live vital trends (blood pressure, heart rate, blood sugar, SpO₂) with active status checks. The dashboard uses custom-trained machine learning models and Google Gemini AI to analyze trends, predict upcoming risk levels, flag critical anomalies, and recommend customized medical actions.
+
+---
+
+### 📅 Multilingual Doctor Booking
+![Appointment Booking](./assets/appointement_page.png)
+A streamlined booking engine enabling patients to search for specialist physicians, filter by rating, experience, or consultation fees, and reserve digital or physical slots. The system performs instantaneous backend validation to eliminate scheduling conflicts.
+
+---
+
+### 📁 Secure Medical Record Vault
+![Medical Report Repository](./assets/Medical_report_repository.png)
+A secure repository for storing and organizing laboratory tests, diagnostic images, and PDFs. Patients can quickly upload records, which are instantly mapped and shared with their consulting practitioners during appointments.
+
+---
+
+### 📹 Telehealth and Video Consultations
+![Telemedicine Portal](./assets/Online_consultant.png)
+A real-time, browser-native virtual clinic powered by WebRTC and Socket.IO for HD video consultations. Patients can interact face-to-face with their physicians and access live digital prescriptions directly within the call interface.
+
+---
+
+### 🛒 E-Pharmacy Marketplace
+![Medical Store](./assets/Medical_store.png)
+A complete electronic store for ordering prescription and over-the-counter medications. Patients can search catalog items, manage their cart, securely check out, and track their delivery status in real time.
+
+---
+
+### 🧠 Wellness & Brain Training
+<div align="center">
+  <img src="./assets/Wellness_games.png" alt="Wellness Games 1" width="49%"/>
+  <img src="./assets/Wellness_games_2.png" alt="Wellness Games 2" width="49%"/>
+</div>
+<br>
+Engaging, custom-designed cognitive games aimed at promoting mental wellness and tracking brain agility. Patients can challenge themselves, view high scores, and monitor long-term cognitive health parameters from their profile.
+
+---
+
+### 💬 Support Networks & Community
+![Community Forum](./assets/community.png)
+An interactive community board enabling patients to exchange experiences, read educational articles, and discuss treatment paths in a moderated, supportive space.
+
+---
+
+### 🚨 Emergency First-Aid Assistance
+![Emergency Guide](./assets/Emergency_guide.png)
+An offline-ready, quick-access emergency module presenting step-by-step first-aid protocols for urgent medical scenarios, providing crucial guidance when every second counts.
+
+---
+
+## 🩺 Doctor Suite
+
+### 📅 Professional Appointment Manager
+![Doctor Appointments](./assets/Doctors_appointment.png)
+A robust practitioner scheduler providing real-time management of upcoming patient bookings. Doctors can quickly review clinical details, accept or reschedule consults, and launch telehealth sessions.
+
+---
+
+### 🗂️ Longitudinal Patient Records
+![Doctor Patient Records](./assets/DoctorsPatient_record.png)
+A secure medical workstation giving physicians a comprehensive view of patient histories. Doctors can review longitudinal vital logs, analyze uploaded PDF reports, and issue authenticated digital prescriptions.
+
+---
+
+### ⚙️ Settings & Smart Scheduling
+![Doctor Settings](./assets/Doctor_setting.png)
+A centralized configuration interface enabling medical professionals to customize their clinical availability, update consulting fees, edit bio profiles, and configure automated notification preferences.
+
+---
+
+## 💊 Pharmacy Operations
+
+### 📈 Pharmacy Operations Control Panel
+![Pharmacy Dashboard](./assets/Pharmacy_dashboard.png)
+A high-level operations dashboard built for pharmacy managers to monitor sales analytics, track pending prescription orders, identify popular medications, and view overall business revenue.
+
+---
+
+### 📦 Digital Order Dispatch
+![Pharmacy Orders](./assets/Pharmacy_orders.png)
+An intuitive shipping and fulfillment queue that displays incoming medication orders, verified prescriptions, customer addresses, and real-time delivery status updates.
+
+---
+
+### 🏷️ Catalog and Inventory Control
+![Pharmacy Products](./assets/Pharmacy_product.png)
+An agile stock manager allowing pharmacies to add new medicine listings, adjust prices, edit availability details, and view automatic warnings when inventory levels run low.
+
+---
+
+## 🎬 Platform Demonstration
+
+Experience CareSync in action! Watch our comprehensive walkthrough showing the AI Voice Booking, vital tracking with Gemini warnings, patient-doctor video consultation, and pharmacy dispatch loops.
+
+<div align="center">
+  <h3><a href="https://bit.ly/4nMi689" target="_blank">📺 Watch the Demo Video</a></h3>
+  <br>
+  <a href="https://bit.ly/4nMi689" target="_blank">
+    <img src="./assets/Qrcode.png" alt="Scan to Watch Demo" width="180" style="border-radius: 12px; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);"/>
+  </a>
+  <p><i>Scan the QR Code to watch the demo directly on your mobile device.</i></p>
+</div>
+
+---
+
+## 🛠️ Tech Stack & Architecture
+
+### 💻 Frontend
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+[![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white)](https://framer.com/motion)
+[![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socket.io&logoColor=white)](https://socket.io)
+
+* **Architecture**: Vite-powered Single Page Application (SPA) with React 18
+* **Real-time Comms**: WebRTC peer connections and Socket.IO real-time channels
+* **Design Language**: Tailwind CSS utility classes and Radix UI components
+
+---
+
+### ⚙️ Backend & Storage
+[![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com)
+[![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com)
+[![Twilio](https://img.shields.io/badge/Twilio-F22F46?style=for-the-badge&logo=twilio&logoColor=white)](https://www.twilio.com)
+
+* **Runtime & Framework**: Express.js server on Node.js runtime
+* **Database Layer**: MongoDB document database with Mongoose ODM modeling
+* **Document Hosting**: Secure Cloudinary hosting for clinical report files
+* **Communication APIs**: Twilio Voice (IVR call flows) and dynamic SMS gateways
+
+---
+
+### 🧠 Intelligence & Analytics
+[![Google Gemini](https://img.shields.io/badge/Google_Gemini-8E75C2?style=for-the-badge&logo=googlegemini&logoColor=white)](https://deepmind.google/technologies/gemini)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
+
+* **Generative Models**: Google Gemini API powering intelligent wellness reporting and conversational dialogue
+* **Machine Learning**: Custom Python-based analytics for vital risk prediction and health trend mapping
+
+---
+<div align="center">
+  <sub>Developed with ❤️ for CareSync. All screenshots are authentic and captured directly from the live platform.</sub>
+</div>
